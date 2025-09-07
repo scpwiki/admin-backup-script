@@ -103,6 +103,9 @@ async function runBackup(backupButton) {
   const userBans = await backupUserBans();
 
   // TODO
+
+  backupButton.innerText = 'Run Admin Panel Backup';
+  backupButton.removeAttribute('disabled');
 }
 
 function main() {
