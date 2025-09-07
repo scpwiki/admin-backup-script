@@ -92,6 +92,27 @@ async function backupUserBans() {
   return bans;
 }
 
+async function backupIpBans() {
+  const result = await requestModule('managesite/blocks/ManageSiteIpBlocksModule', null);
+  const element = parseHtml(result);
+  const ibans = element.querySelectorAll('table tr');
+
+  // skip the first row, which is a header
+  const bans = [];
+  for (let i = 1; i < ibans.length; i++) {
+    const iban = ibans[i];
+    const ipElement = iban.querySelector('td');
+    const dateElement = iban.querySelector('td span.odate');
+    const reasonElement = iban.querySelector('td[style]');
+    bans.push({
+      ip: ipElement.innerText.trim(),
+      timestamp: parseDateElement(dateElement),
+      reason: reasonElement.innerText.trim(),
+    });
+  }
+  return bans;
+}
+
 // Main
 
 async function runBackup(backupButton) {
@@ -101,6 +122,7 @@ async function runBackup(backupButton) {
   backupButton.setAttribute('disabled', '');
 
   const userBans = await backupUserBans();
+  const ipBans = await backupIpBans();
 
   // TODO
 
