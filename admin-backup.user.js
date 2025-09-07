@@ -90,7 +90,7 @@ async function fetchBasicInfo() {
   const result = await requestModule('managesite/ManageSiteGeneralModule', null);
   const element = parseHtml(result);
 
-  const descriptionElement = element.getElementById('site-description-field');
+  const description = element.getElementById('site-description-field').value;
   const textFields = element.querySelectorAll('.controls input');
   if (textFields.length !== 4) {
     throw new Error(`Unexpected number of text fields for general site info: ${textFields.length} (wanted 4)`);
@@ -100,7 +100,7 @@ async function fetchBasicInfo() {
     id,
     slug,
     lang,
-    description: descriptionElement.value,
+    description,
     name: textFields[0].value,
     tagline: textFields[1].value,
     homePage: textFields[2].value,
@@ -108,6 +108,25 @@ async function fetchBasicInfo() {
 
     // why not, might come in handy
     dumpGeneratedAt: new Date().toISOString(),
+  };
+}
+
+async function fetchDomainSettings() {
+  const result = await requestModule('managesite/ManageSiteDomainModule', null);
+  const element = parseHtml(result);
+
+  const customDomain = element.getElementById('sm-domain-field').value;
+  const customDomainOnly = element.getElementById('sm-domain-default').checked;
+  const redirectElements = element.querySelectorAll('#sm-redirects-box input');
+  const extraDomains = [];
+  for (let i = 0; i < redirectElements.length; i++) {
+    extraDomains.push(redirectElements[i].value);
+  }
+
+  return {
+    customDomain,
+    customDomainOnly,
+    extraDomains,
   };
 }
 
@@ -162,22 +181,17 @@ async function runBackup(backupButton) {
   backupButton.setAttribute('disabled', '');
 
   // Fetch data
-  const basicInfo = await fetchBasicInfo();
+  const siteInfo = await fetchBasicInfo();
+  const domains = await fetchDomainSettings();
   const userBans = await fetchUserBans();
   const ipBans = await fetchIpBans();
   // TODO other data
 
-  // Build individual files
-  const siteInfo = JSON.stringify(basicInfo);
-  const bans = JSON.stringify({
-    user: userBans,
-    ip: ipBans,
-  });
-
   // Build and download ZIP
   const zipFiles = [
-    { name: 'info.json', input: siteInfo },
-    { name: 'bans.json', input: bans },
+    { name: 'info.json', input: JSON.stringify(siteInfo) },
+    { name: 'domains.json', input: JSON.stringify(domains) },
+    { name: 'bans.json', input: JSON.stringify({ user: userBans, ip: ipBans }) },
   ];
 
   const { downloadZip } = await import('https://cdn.jsdelivr.net/npm/client-zip/index.js');
