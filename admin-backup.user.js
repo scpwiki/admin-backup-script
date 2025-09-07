@@ -69,7 +69,7 @@ async function requestModule(moduleName, params=null) {
   return result['body'];
 }
 
-function downloadFile(filename, blob) {
+function promptFileDownload(filename, blob) {
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = filename;
@@ -129,11 +129,34 @@ async function runBackup(backupButton) {
   backupButton.innerText = 'Backup Running';
   backupButton.setAttribute('disabled', '');
 
+  // Fetch data
   const siteId = WIKIREQUEST.info.siteId;
+  // verified to always be the wikidot domain
+  const siteSlug = WIKIREQUEST.info.domain.replace(/\.wikidot\.com$/, '');
+  const siteLang = WIKIREQUEST.info.lang;
   const userBans = await backupUserBans();
   const ipBans = await backupIpBans();
 
   // TODO
+
+  // Build individual files
+  const siteInfo = JSON.stringify({
+    id: siteId,
+    slug: siteSlug,
+    lang: siteLang,
+  });
+  const bans = JSON.stringify({ user: userBans, ip: ipBans });
+
+  // Build and download ZIP
+  const zipFiles = [
+    { name: 'info.json', input: siteInfo },
+    { name: 'bans.json', input: bans },
+  ];
+
+  const { downloadZip } = await import('https://cdn.jsdelivr.net/npm/client-zip/index.js');
+  const zipBlob = await downloadZip(zipFiles).blob();
+  promptFileDownload(`${siteSlug}.zip`, zipBlob);
+  URL.revokeObjectURL(zipBlob);
 
   backupButton.innerText = 'Run Admin Panel Backup';
   backupButton.removeAttribute('disabled');
