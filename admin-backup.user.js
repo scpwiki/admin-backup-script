@@ -121,9 +121,9 @@ async function runBackup(backupButton) {
   backupButton.innerText = 'Backup Running';
   backupButton.setAttribute('disabled', '');
 
+  const siteId = WIKIREQUEST.info.siteId;
   const userBans = await backupUserBans();
   const ipBans = await backupIpBans();
-  console.log({userBans,ipBans});
 
   // TODO
 
