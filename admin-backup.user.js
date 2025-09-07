@@ -79,7 +79,7 @@ function promptFileDownload(filename, blob) {
 
 // Backup tasks
 
-async function backupGeneralInfo() {
+async function fetchGeneralInfo() {
   const result = await requestModule('managesite/ManageSiteGeneralModule', null);
   const element = parseHtml(result);
 
@@ -97,7 +97,7 @@ async function backupGeneralInfo() {
   return { name, tagline, homePage, welcomePage, description };
 }
 
-async function backupUserBans() {
+async function fetchUserBans() {
   const result = await requestModule('managesite/blocks/ManageSiteUserBlocksModule', null);
   const element = parseHtml(result);
   const ubans = element.querySelectorAll('table tr');
@@ -118,7 +118,7 @@ async function backupUserBans() {
   return bans;
 }
 
-async function backupIpBans() {
+async function fetchIpBans() {
   const result = await requestModule('managesite/blocks/ManageSiteIpBlocksModule', null);
   const element = parseHtml(result);
   const ibans = element.querySelectorAll('table tr');
@@ -148,13 +148,13 @@ async function runBackup(backupButton) {
   backupButton.setAttribute('disabled', '');
 
   // Fetch data
-  const _todo = await backupGeneralInfo();
+  const _todo = await fetchGeneralInfo();
   const siteId = WIKIREQUEST.info.siteId;
   // verified to always be the wikidot domain
   const siteSlug = WIKIREQUEST.info.domain.replace(/\.wikidot\.com$/, '');
   const siteLang = WIKIREQUEST.info.lang;
-  const userBans = await backupUserBans();
-  const ipBans = await backupIpBans();
+  const userBans = await fetchUserBans();
+  const ipBans = await fetchIpBans();
 
   // TODO
 
