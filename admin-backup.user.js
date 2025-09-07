@@ -79,6 +79,24 @@ function promptFileDownload(filename, blob) {
 
 // Backup tasks
 
+async function backupGeneralInfo() {
+  const result = await requestModule('managesite/ManageSiteGeneralModule', null);
+  const element = parseHtml(result);
+
+  const descriptionElement = element.getElementById('site-description-field');
+  const textFields = element.querySelectorAll('.controls input');
+  if (textFields.length !== 4) {
+    throw new Error(`Unexpected number of text fields for general site info: ${textFields.length} (wanted 4)`);
+  }
+
+  const name = textFields[0].value;
+  const tagline = textFields[1].value;
+  const homePage = textFields[2].value;
+  const welcomePage = textFIelds[3].value;
+  const description = descriptionElement.value;
+  return { name, tagline, homePage, welcomePage, description };
+}
+
 async function backupUserBans() {
   const result = await requestModule('managesite/blocks/ManageSiteUserBlocksModule', null);
   const element = parseHtml(result);
@@ -130,6 +148,7 @@ async function runBackup(backupButton) {
   backupButton.setAttribute('disabled', '');
 
   // Fetch data
+  const _todo = await backupGeneralInfo();
   const siteId = WIKIREQUEST.info.siteId;
   // verified to always be the wikidot domain
   const siteSlug = WIKIREQUEST.info.domain.replace(/\.wikidot\.com$/, '');
