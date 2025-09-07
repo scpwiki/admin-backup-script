@@ -66,14 +66,14 @@ async function requestModule(moduleName, params=null) {
   if (result['status'] !== 'ok') {
     throw new Error(`${moduleName} request failed`);
   }
-  return result;
+  return result['body'];
 }
 
 // Backup tasks
 
 async function backupUserBans() {
   const result = await requestModule('managesite/blocks/ManageSiteUserBlocksModule', null);
-  const element = parseHtml(result['body']);
+  const element = parseHtml(result);
   const ubans = element.querySelectorAll('table tr');
 
   // skip the first row, which is a header
