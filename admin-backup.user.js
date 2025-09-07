@@ -144,6 +144,7 @@ async function runBackup(backupButton) {
     id: siteId,
     slug: siteSlug,
     lang: siteLang,
+    dumpGeneratedAt: new Date().toISOString(),
   });
   const bans = JSON.stringify({ user: userBans, ip: ipBans });
 
