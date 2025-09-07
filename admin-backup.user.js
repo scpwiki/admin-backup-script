@@ -69,6 +69,14 @@ async function requestModule(moduleName, params=null) {
   return result['body'];
 }
 
+function downloadFile(filename, blob) {
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  link.remove();
+}
+
 // Backup tasks
 
 async function backupUserBans() {
