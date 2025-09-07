@@ -79,7 +79,14 @@ function promptFileDownload(filename, blob) {
 
 // Backup tasks
 
-async function fetchGeneralInfo() {
+async function fetchBasicInfo() {
+  // From variables
+  const id = WIKIREQUEST.info.siteId;
+  const slug = WIKIREQUEST.info.domain.replace(/\.wikidot\.com$/, '');
+  // ^ This is verified to always be the *.wikidot.com domain
+  const lang = WIKIREQUEST.info.lang;
+
+  // From the 'general module'
   const result = await requestModule('managesite/ManageSiteGeneralModule', null);
   const element = parseHtml(result);
 
@@ -89,12 +96,19 @@ async function fetchGeneralInfo() {
     throw new Error(`Unexpected number of text fields for general site info: ${textFields.length} (wanted 4)`);
   }
 
-  const name = textFields[0].value;
-  const tagline = textFields[1].value;
-  const homePage = textFields[2].value;
-  const welcomePage = textFIelds[3].value;
-  const description = descriptionElement.value;
-  return { name, tagline, homePage, welcomePage, description };
+  return {
+    id,
+    slug,
+    lang,
+    description: descriptionElement.value,
+    name: textFields[0].value,
+    tagline: textFields[1].value,
+    homePage: textFields[2].value,
+    welcomePage: textFIelds[3].value,
+
+    // why not, might come in handy
+    dumpGeneratedAt: new Date().toISOString(),
+  };
 }
 
 async function fetchUserBans() {
@@ -148,23 +162,13 @@ async function runBackup(backupButton) {
   backupButton.setAttribute('disabled', '');
 
   // Fetch data
-  const _todo = await fetchGeneralInfo();
-  const siteId = WIKIREQUEST.info.siteId;
-  // verified to always be the wikidot domain
-  const siteSlug = WIKIREQUEST.info.domain.replace(/\.wikidot\.com$/, '');
-  const siteLang = WIKIREQUEST.info.lang;
+  const basicInfo = await fetchBasicInfo();
   const userBans = await fetchUserBans();
   const ipBans = await fetchIpBans();
-
-  // TODO
+  // TODO other data
 
   // Build individual files
-  const siteInfo = JSON.stringify({
-    id: siteId,
-    slug: siteSlug,
-    lang: siteLang,
-    dumpGeneratedAt: new Date().toISOString(),
-  });
+  const siteInfo = JSON.stringify(basicInfo);
   const bans = JSON.stringify({
     user: userBans,
     ip: ipBans,
@@ -178,7 +182,7 @@ async function runBackup(backupButton) {
 
   const { downloadZip } = await import('https://cdn.jsdelivr.net/npm/client-zip/index.js');
   const zipBlob = await downloadZip(zipFiles).blob();
-  promptFileDownload(`${siteSlug}.zip`, zipBlob);
+  promptFileDownload(`${basicInfo.slug}.zip`, zipBlob);
   URL.revokeObjectURL(zipBlob);
 
   backupButton.innerText = 'Run Admin Panel Backup';
