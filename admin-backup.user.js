@@ -146,7 +146,10 @@ async function runBackup(backupButton) {
     lang: siteLang,
     dumpGeneratedAt: new Date().toISOString(),
   });
-  const bans = JSON.stringify({ user: userBans, ip: ipBans });
+  const bans = JSON.stringify({
+    user: userBans,
+    ip: ipBans,
+  });
 
   // Build and download ZIP
   const zipFiles = [
