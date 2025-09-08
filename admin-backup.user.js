@@ -243,7 +243,9 @@ async function fetchDomainSettings() {
   const redirectElements = element.querySelectorAll('#sm-redirects-box input');
   const extraDomains = [];
   for (const redirectElement of redirectElements) {
-    extraDomains.push(redirectElement.value);
+    if (redirectElement.value) {
+      extraDomains.push(redirectElement.value);
+    }
   }
 
   return {
