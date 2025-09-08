@@ -355,13 +355,24 @@ async function fetchAccessPolicy() {
   const element = await requestModuleHtml('managesite/ManageSiteAccessPolicyModule');
   const enableApplications = element.getElementById('sm-membership-apply').checked;
   const autoAccept = element.getElementById('sm-membership-automatic').value;
-  const password = element.getElementById('sm-membership-password').value;
+  const enablePassword = element.getElementById('sm-membership-password').checked;
+  const passwordValue = element.querySelector('input[name=password]').value;
   const blockClones = element.getElementById('sm-block-clone-checkbox').checked;
   const blockIncludes = element.getElementById('sm-block-csi-checkbox').checked;
   // ^ cross-site includes
   const allowHotlinks = element.getElementById('sm-allow-hotlinking-checkbox').checked;
   // NOTE: private site options are not being saved
-  return { enableApplications, autoAccept, password, blockClones, blockIncludes, allowHotlinks };
+  return {
+    enableApplications,
+    autoAccept,
+    membershipPassword: {
+      enable: enablePassword,
+      value: passwordValue,
+    },
+    blockClones,
+    blockIncludes,
+    allowHotlinks,
+  };
 }
 
 // Main
