@@ -278,7 +278,7 @@ async function fetchCategorySettings() {
       theme: {
         id: raw.theme_id,
         default: raw.theme_default,
-        external_url: raw.theme_external_url,
+        externalUrl: raw.theme_external_url,
       },
       layout: {
         id: raw.layout_id,
