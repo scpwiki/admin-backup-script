@@ -222,6 +222,7 @@ async function fetchBasicInfo() {
   }
 
   return {
+    dumpGeneratedAt: new Date().toISOString(), // why not, might come in handy
     id,
     slug,
     lang,
@@ -230,9 +231,6 @@ async function fetchBasicInfo() {
     tagline: textFields[1].value,
     homePage: textFields[2].value,
     welcomePage: textFields[3].value,
-
-    // why not, might come in handy
-    dumpGeneratedAt: new Date().toISOString(),
   };
 }
 
