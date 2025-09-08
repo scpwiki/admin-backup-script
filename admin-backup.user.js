@@ -256,6 +256,18 @@ async function fetchDomainSettings() {
 async function fetchCategorySettings() {
   // Fetch category JSON
   const result = await requestModule('managesite/ManageSiteLicenseModule');
+
+  // License values
+  const element = parseHtml(result['body']);
+  const licenseElements = element.querySelectorAll('#sm-license-lic option');
+  const licenses = {};
+  for (const licenseElement of licenseElements) {
+    const licenseId = licenseElement.value;
+    const licenseText = licenseElement.innerText;
+    const licenses[licenseId] = licenseText;
+  }
+
+  // Build category data
   for (const raw of result['categories']) {
     categories[raw.name] = {
       id: raw.categry_id,
@@ -273,6 +285,7 @@ async function fetchCategorySettings() {
         id: raw.license_id,
         default: raw.license_default,
         custom: raw.license_other,
+        name: licenses[raw.license_id],
       },
       perPageDiscussion: {
         enable: raw.per_page_discussion,
@@ -292,17 +305,6 @@ async function fetchCategorySettings() {
       permissions: parsePermissions(raw.permissions_default, raw.permissions),
     };
   }
-
-  // Licenses
-  // TODO
-  const categoryElements = element.querySelectorAll('#sm-license-cats option');
-  const categories = {};
-  for (const categoryElement of categoryElements) {
-    const name = categoryElement.innerText;
-    const id = categoryElement.value;
-    categories[name] = { id };
-  }
-
 
   // TODO
 }
