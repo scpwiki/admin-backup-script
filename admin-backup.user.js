@@ -214,9 +214,9 @@ async function fetchBasicInfo() {
   const lang = WIKIREQUEST.info.lang;
 
   // From the 'general module'
-  const element = await requestModuleHtml('managesite/ManageSiteGeneralModule');
-  const description = element.getElementById('site-description-field').value;
-  const textFields = element.querySelectorAll('.controls input');
+  const html = await requestModuleHtml('managesite/ManageSiteGeneralModule');
+  const description = html.getElementById('site-description-field').value;
+  const textFields = html.querySelectorAll('.controls input');
   if (textFields.length !== 4) {
     throw new Error(`Unexpected number of text fields for general site info: ${textFields.length} (wanted 4)`);
   }
@@ -235,10 +235,10 @@ async function fetchBasicInfo() {
 }
 
 async function fetchDomainSettings() {
-  const element = await requestModuleHtml('managesite/ManageSiteDomainModule');
-  const customDomain = element.getElementById('sm-domain-field').value;
-  const customDomainOnly = element.getElementById('sm-domain-default').checked;
-  const redirectElements = element.querySelectorAll('#sm-redirects-box input');
+  const html = await requestModuleHtml('managesite/ManageSiteDomainModule');
+  const customDomain = html.getElementById('sm-domain-field').value;
+  const customDomainOnly = html.getElementById('sm-domain-default').checked;
+  const redirectElements = html.querySelectorAll('#sm-redirects-box input');
   const extraDomains = [];
   for (const redirectElement of redirectElements) {
     if (redirectElement.value) {
@@ -258,8 +258,8 @@ async function fetchCategorySettings() {
   const result = await requestModule('managesite/ManageSiteLicenseModule');
 
   // License values
-  const element = parseHtml(result['body']);
-  const licenseElements = element.querySelectorAll('#sm-license-lic option');
+  const html = parseHtml(result['body']);
+  const licenseElements = html.querySelectorAll('#sm-license-lic option');
   const licenses = {};
   for (const licenseElement of licenseElements) {
     const licenseId = licenseElement.value;
@@ -313,11 +313,10 @@ async function fetchCategorySettings() {
 }
 
 async function fetchUserBans() {
-  const element = await requestModuleHtml('managesite/blocks/ManageSiteUserBlocksModule');
-  const ubans = element.querySelectorAll('table tr');
-
-  // skip the first row, which is a header
+  const html = await requestModuleHtml('managesite/blocks/ManageSiteUserBlocksModule');
+  const ubans = html.querySelectorAll('table tr');
   const bans = [];
+  // skip the first row, is header
   for (let i = 1; i < ubans.length; i++) {
     const uban = ubans[i];
     const userElement = uban.querySelector('td span.printuser a');
@@ -333,8 +332,8 @@ async function fetchUserBans() {
 }
 
 async function fetchIpBans() {
-  const element = await requestModuleHtml('managesite/blocks/ManageSiteIpBlocksModule');
-  const ibans = element.querySelectorAll('table tr');
+  const html = await requestModuleHtml('managesite/blocks/ManageSiteIpBlocksModule');
+  const ibans = html.querySelectorAll('table tr');
 
   // skip the first row, which is a header
   const bans = [];
@@ -353,15 +352,15 @@ async function fetchIpBans() {
 }
 
 async function fetchAccessPolicy() {
-  const element = await requestModuleHtml('managesite/ManageSiteAccessPolicyModule');
-  const enableApplications = element.getElementById('sm-membership-apply').checked;
-  const autoAccept = element.getElementById('sm-membership-automatic').value;
-  const enablePassword = element.getElementById('sm-membership-password').checked;
-  const passwordValue = element.querySelector('input[name=password]').value;
-  const blockClones = element.getElementById('sm-block-clone-checkbox').checked;
-  const blockIncludes = element.getElementById('sm-block-csi-checkbox').checked;
+  const html = await requestModuleHtml('managesite/ManageSiteAccessPolicyModule');
+  const enableApplications = html.getElementById('sm-membership-apply').checked;
+  const autoAccept = html.getElementById('sm-membership-automatic').value;
+  const enablePassword = html.getElementById('sm-membership-password').checked;
+  const passwordValue = html.querySelector('input[name=password]').value;
+  const blockClones = html.getElementById('sm-block-clone-checkbox').checked;
+  const blockIncludes = html.getElementById('sm-block-csi-checkbox').checked;
   // ^ cross-site includes
-  const allowHotlinks = element.getElementById('sm-allow-hotlinking-checkbox').checked;
+  const allowHotlinks = html.getElementById('sm-allow-hotlinking-checkbox').checked;
   // NOTE: private site options are not being saved
   return {
     enableApplications,
