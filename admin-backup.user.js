@@ -229,7 +229,7 @@ async function fetchBasicInfo() {
     name: textFields[0].value,
     tagline: textFields[1].value,
     homePage: textFields[2].value,
-    welcomePage: textFIelds[3].value,
+    welcomePage: textFields[3].value,
 
     // why not, might come in handy
     dumpGeneratedAt: new Date().toISOString(),
@@ -264,10 +264,11 @@ async function fetchCategorySettings() {
   for (const licenseElement of licenseElements) {
     const licenseId = licenseElement.value;
     const licenseText = licenseElement.innerText;
-    const licenses[licenseId] = licenseText;
+    licenses[licenseId] = licenseText;
   }
 
   // Build category data
+  const categories = {};
   for (const raw of result['categories']) {
     categories[raw.name] = {
       id: raw.categry_id,
@@ -307,6 +308,7 @@ async function fetchCategorySettings() {
   }
 
   // TODO
+  return categories;
 }
 
 async function fetchUserBans() {
@@ -385,12 +387,12 @@ async function runBackup(backupButton) {
     { name: 'domains.json', input: JSON.stringify(domains) },
     { name: 'categories.json', input: JSON.stringify(categories) },
     { name: 'bans.json', input: JSON.stringify({ user: userBans, ip: ipBans }) },
-    { name: 'access.json', input: JSON.strings(access) },
+    { name: 'access.json', input: JSON.stringify(access) },
   ];
 
   const { downloadZip } = await import('https://cdn.jsdelivr.net/npm/client-zip/index.js');
   const zipBlob = await downloadZip(zipFiles).blob();
-  promptFileDownload(`${basicInfo.slug}.zip`, zipBlob);
+  promptFileDownload(`${siteInfo.slug}.zip`, zipBlob);
   URL.revokeObjectURL(zipBlob);
 
   backupButton.innerText = 'Run Admin Panel Backup';
