@@ -267,6 +267,8 @@ async function fetchCategorySettings() {
     licenses[licenseId] = licenseText;
   }
 
+  // TODO rest of the licensing stuff
+
   // Build category data
   const categories = {};
   for (const raw of result['categories']) {
@@ -307,7 +309,6 @@ async function fetchCategorySettings() {
     };
   }
 
-  // TODO
   return categories;
 }
 
