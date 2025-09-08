@@ -349,6 +349,19 @@ async function fetchIpBans() {
   return bans;
 }
 
+async function fetchAccessPolicy() {
+  const element = await requestModuleHtml('managesite/ManageSiteAccessPolicyModule');
+  const enableApplications = element.getElementById('sm-membership-apply').checked;
+  const autoAccept = element.getElementById('sm-membership-automatic').value;
+  const password = element.getElementById('sm-membership-password').value;
+  const blockClones = element.getElementById('sm-block-clone-checkbox').checked;
+  const blockIncludes = element.getElementById('sm-block-csi-checkbox').checked;
+  // ^ cross-site includes
+  const allowHotlinks = element.getElementById('sm-allow-hotlinking-checkbox').checked;
+  // NOTE: private site options are not being saved
+  return { enableApplications, autoAccept, password, blockClones, blockIncludes, allowHotlinks };
+}
+
 // Main
 
 async function runBackup(backupButton) {
@@ -363,6 +376,7 @@ async function runBackup(backupButton) {
   const categories = await fetchCategorySettings();
   const userBans = await fetchUserBans();
   const ipBans = await fetchIpBans();
+  const access = await fetchAccessPolicy();
   // TODO other data
 
   // Build and download ZIP
@@ -371,6 +385,7 @@ async function runBackup(backupButton) {
     { name: 'domains.json', input: JSON.stringify(domains) },
     { name: 'categories.json', input: JSON.stringify(categories) },
     { name: 'bans.json', input: JSON.stringify({ user: userBans, ip: ipBans }) },
+    { name: 'access.json', input: JSON.strings(access) },
   ];
 
   const { downloadZip } = await import('https://cdn.jsdelivr.net/npm/client-zip/index.js');
