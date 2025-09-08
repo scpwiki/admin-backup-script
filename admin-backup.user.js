@@ -16,7 +16,7 @@
 // @include     https://*.wikidot.com/_admin
 // ==/UserScript==
 
-// Utilities
+// Data processing
 
 function parseHtml(html) {
   const parser = new DOMParser();
@@ -33,14 +33,136 @@ function parseUserElement(element) {
 
 function parseDateElement(element) {
   // odate element -> timestamp int
-  for (let i = 0; element.classList; i++) {
-    const klass = element.classList[i];
+  for (const klass of element.classList) {
     if (klass.startsWith('time_')) {
       return parseInt(klass.substring(5));
     }
   }
   throw new Error('Unable to find timestamp in odate element');
 }
+
+function parseRating(value) {
+  // Example strings:
+  // - draP (disabled)
+  // - raP  (default/inherited)
+  // - ervS (registered, visible votes, five-star)
+  // - ervM (registered, visible votes, plus/minus)
+  // - eraM (registered, hidden votes, plus/minus)
+  // - emvP (site members, visible votes, plus-only)
+  // - emaP (site members, hidden votes, plus-only)
+
+  // Overall status
+  //   d - disabled
+  //   e - enabled
+  //   If neither, then 'default'
+  //   Always the first character
+  let enable;
+  switch (value[0]) {
+    case 'e':
+      enable = true;
+      break;
+    case 'd':
+      enable = false;
+      break;
+    default: // lol
+      enable = 'default';
+  }
+
+  // Eligible voters
+  //   r - registered wikidot users
+  //   m - site members
+  let eligibility;
+  if (value.includes('r')) {
+    eligibility = 'registered';
+  } else if (value.includes('m')) {
+    eligibility = 'members';
+  } else {
+    throw new Error(`Invalid vote eligibility in spec str: ${value}`);
+  }
+
+  // Vote visibility
+  //   a - anonymous
+  //   v - visible
+  const visibility = value.includes('v');
+
+  // Vote type
+  //   S - five-star
+  //   M - plus/minus
+  //   P - plus only
+  let voteType;
+  if (value.includes('S')) {
+    voteType = 'fivestar';
+  } else if (value.includes('M')) {
+    voteType = 'plusminus';
+  } else if (value.includes('P')) {
+    voteType = 'plusonly';
+  } else {
+    throw new Error(`Invalid vote type in spec str: ${value}`);
+  }
+
+  return { enable, eligibility, visibility, voteType };
+}
+
+function parsePermissions(enable, value) {
+  // Example strings:
+  // - v:armo;e:m;c:m;m:m;d:m;a:m;r:m;z:m;o:rm
+  // - v:armo;c:;e:;m:;d:;a:;r:;z:;o:
+  // - v:arm;e:;c:;m:;d:;a:;r:;z:;o:
+  // - v:armo;c:;e:arm;m:rm;d:rm;a:m;r:o;z:o;o:
+
+  // Permission action:
+  //   v - View pages
+  //   c - Create pages
+  //   e - Edit pages
+  //   m - Move pages
+  //   d - Delete pages
+  //   a - Add files
+  //   r - Rename files
+  //   z - Replace, move, and delete files
+  //   o - Show page options
+
+  function parseAction(value) {
+    switch (value) {
+      case 'v': return 'viewPages';
+      case 'c': return 'createPages';
+      case 'e': return 'editPages';
+      case 'm': return 'movePages';
+      case 'd': return 'deletePages';
+      case 'a': return 'uploadFiles';
+      case 'r': return 'renameFiles';
+      case 'z': return 'replaceDeleteFiles';
+      case 'o': return 'showPageOptions';
+    }
+  }
+
+  // User scopes:
+  //   a - Anonymous users (no account)
+  //   r - Registered users (has account)
+  //   m - Site members
+  //   o - Page creators ("owners"), regardless of the above
+
+  function parseScope(value) {
+    const anonymous = value.includes('a');
+    const registered = value.includes('r');
+    const members = value.includes('m');
+    const pageCreators = value.includes('o');
+    return { anonymous, registered, members, pageCreators };
+  }
+
+  // Parse each permission group
+
+  const permissions = { enable };
+  for (const group of value.split(';')) {
+    const [perm, scope] = group.split(':');
+    const action = parseAction(perm);
+    const options = parseScope(scope);
+    permissions[action] = options;
+  }
+
+  return permissions;
+}
+
+// Utilities
 
 function showConfirmation(actionName, content) {
   return new Promise((resolve, reject) => {
@@ -66,7 +188,12 @@ async function requestModule(moduleName, params=null) {
   if (result['status'] !== 'ok') {
     throw new Error(`${moduleName} request failed`);
   }
-  return result['body'];
+  return result;
+}
+
+async function requestModuleHtml(moduleName) {
+  const result = await requestModule(moduleName);
+  return parseHtml(result['body']);
 }
 
 function promptFileDownload(filename, blob) {
@@ -87,9 +214,7 @@ async function fetchBasicInfo() {
   const lang = WIKIREQUEST.info.lang;
 
   // From the 'general module'
-  const result = await requestModule('managesite/ManageSiteGeneralModule', null);
-  const element = parseHtml(result);
-
+  const element = await requestModuleHtml('managesite/ManageSiteGeneralModule');
   const description = element.getElementById('site-description-field').value;
   const textFields = element.querySelectorAll('.controls input');
   if (textFields.length !== 4) {
@@ -112,15 +237,13 @@ async function fetchBasicInfo() {
 }
 
 async function fetchDomainSettings() {
-  const result = await requestModule('managesite/ManageSiteDomainModule', null);
-  const element = parseHtml(result);
-
+  const element = await requestModuleHtml('managesite/ManageSiteDomainModule');
   const customDomain = element.getElementById('sm-domain-field').value;
   const customDomainOnly = element.getElementById('sm-domain-default').checked;
   const redirectElements = element.querySelectorAll('#sm-redirects-box input');
   const extraDomains = [];
-  for (let i = 0; i < redirectElements.length; i++) {
-    extraDomains.push(redirectElements[i].value);
+  for (const redirectElement of redirectElements) {
+    extraDomains.push(redirectElement.value);
   }
 
   return {
@@ -130,9 +253,62 @@ async function fetchDomainSettings() {
   };
 }
 
+async function fetchCategorySettings() {
+  // Fetch category JSON
+  const result = await requestModule('managesite/ManageSiteLicenseModule');
+  for (const raw of result['categories']) {
+    categories[raw.name] = {
+      id: raw.categry_id,
+      name: raw.name,
+      theme: {
+        id: raw.theme_id,
+        default: raw.theme_default,
+        external_url: raw.theme_external_url,
+      },
+      layout: {
+        id: raw.layout_id,
+        default: raw.layout_default,
+      },
+      license: {
+        id: raw.license_id,
+        default: raw.license_default,
+        custom: raw.license_other,
+      },
+      perPageDiscussion: {
+        enable: raw.per_page_discussion,
+        default: raw.per_page_discussion_default,
+      },
+      nav: {
+        default: raw.nav_default,
+        topBar: raw.top_bar_page_name,
+        sideBar: raw.side_bar_page_name,
+      },
+      template: {
+        id: raw.template_id,
+        pageTitle: raw.page_title_template,
+      },
+      autonumerate: raw.autonumerate,
+      rating: parseRating(raw.rating),
+      permissions: parsePermissions(raw.permissions_default, raw.permissions),
+    };
+  }
+
+  // Licenses
+  // TODO
+  const categoryElements = element.querySelectorAll('#sm-license-cats option');
+  const categories = {};
+  for (const categoryElement of categoryElements) {
+    const name = categoryElement.innerText;
+    const id = categoryElement.value;
+    categories[name] = { id };
+  }
+
+
+  // TODO
+}
+
 async function fetchUserBans() {
-  const result = await requestModule('managesite/blocks/ManageSiteUserBlocksModule', null);
-  const element = parseHtml(result);
+  const element = await requestModuleHtml('managesite/blocks/ManageSiteUserBlocksModule');
   const ubans = element.querySelectorAll('table tr');
 
   // skip the first row, which is a header
@@ -152,8 +328,7 @@ async function fetchUserBans() {
 }
 
 async function fetchIpBans() {
-  const result = await requestModule('managesite/blocks/ManageSiteIpBlocksModule', null);
-  const element = parseHtml(result);
+  const element = await requestModuleHtml('managesite/blocks/ManageSiteIpBlocksModule');
   const ibans = element.querySelectorAll('table tr');
 
   // skip the first row, which is a header
@@ -183,6 +358,7 @@ async function runBackup(backupButton) {
   // Fetch data
   const siteInfo = await fetchBasicInfo();
   const domains = await fetchDomainSettings();
+  const categories = await fetchCategorySettings();
   const userBans = await fetchUserBans();
   const ipBans = await fetchIpBans();
   // TODO other data
@@ -191,6 +367,7 @@ async function runBackup(backupButton) {
   const zipFiles = [
     { name: 'info.json', input: JSON.stringify(siteInfo) },
     { name: 'domains.json', input: JSON.stringify(domains) },
+    { name: 'categories.json', input: JSON.stringify(categories) },
     { name: 'bans.json', input: JSON.stringify({ user: userBans, ip: ipBans }) },
   ];
 
