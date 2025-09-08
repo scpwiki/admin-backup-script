@@ -387,20 +387,18 @@ async function runBackup(backupButton) {
 
   // Fetch data
   const siteInfo = await fetchBasicInfo();
-  const domains = await fetchDomainSettings();
+  siteInfo.domains = await fetchDomainSettings();
+  siteInfo.access = await fetchAccessPolicy();
   const categories = await fetchCategorySettings();
   const userBans = await fetchUserBans();
   const ipBans = await fetchIpBans();
-  const access = await fetchAccessPolicy();
   // TODO other data
 
   // Build and download ZIP
   const zipFiles = [
-    { name: 'info.json', input: JSON.stringify(siteInfo) },
-    { name: 'domains.json', input: JSON.stringify(domains) },
+    { name: 'site.json', input: JSON.stringify(siteInfo) },
     { name: 'categories.json', input: JSON.stringify(categories) },
     { name: 'bans.json', input: JSON.stringify({ user: userBans, ip: ipBans }) },
-    { name: 'access.json', input: JSON.stringify(access) },
   ];
 
   const { downloadZip } = await import('https://cdn.jsdelivr.net/npm/client-zip/index.js');
