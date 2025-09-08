@@ -375,6 +375,30 @@ async function fetchAccessPolicy() {
   };
 }
 
+async function fetchSiteMembers() {
+  async function fetchUsers(module) {
+    const html = await requestModuleHtml(module);
+    const entries = html.querySelectorAll('table tr');
+    const users = [];
+    // skip the first row, is header
+    for (let i = 1; i < entries.length; i++) {
+      const entry = entries[i];
+      const userElement = entry.querySelector('td span.printuser a');
+      const userId = parseUserElement(userElement);
+      users.push(userId);
+    }
+    return users;
+  }
+
+  const [members, moderators, admins] = await Promise.all([
+    fetchUsers('managesite/members/ManageSiteMembersListModule'),
+    fetchUsers('managesite/members/ManageSiteModeratorsModule'),
+    fetchUsers('managesite/members/ManageSiteAdminsModule'),
+  ]);
+  console.log( { members, moderators, admins });
+  return { members, moderators, admins };
+}
+
 // Main
 
 async function runBackup(backupButton) {
@@ -390,6 +414,7 @@ async function runBackup(backupButton) {
   const categories = await fetchCategorySettings();
   const userBans = await fetchUserBans();
   const ipBans = await fetchIpBans();
+  const members = await fetchSiteMembers();
   // TODO other data
 
   // Build and download ZIP
@@ -397,6 +422,7 @@ async function runBackup(backupButton) {
     { name: 'site.json', input: JSON.stringify(siteInfo) },
     { name: 'categories.json', input: JSON.stringify(categories) },
     { name: 'bans.json', input: JSON.stringify({ user: userBans, ip: ipBans }) },
+    { name: 'members.json', input: JSON.stringify(members) },
   ];
 
   const { downloadZip } = await import('https://cdn.jsdelivr.net/npm/client-zip/index.js');
