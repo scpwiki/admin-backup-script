@@ -377,16 +377,48 @@ async function fetchAccessPolicy() {
 
 async function fetchSiteMembers() {
   async function fetchUsers(module) {
-    const html = await requestModuleHtml(module);
-    const entries = html.querySelectorAll('table tr');
-    const users = [];
-    // skip the first row, is header
-    for (let i = 1; i < entries.length; i++) {
-      const entry = entries[i];
-      const userElement = entry.querySelector('td span.printuser a');
-      const userId = parseUserElement(userElement);
-      users.push(userId);
-    }
+    let page = 1;
+    let maxPages;
+
+    do {
+      const html = await requestModuleHtml(module, { page });
+      const entries = html.querySelectorAll('table tr');
+      const users = [];
+      // skip the first row, is header
+      for (let i = 1; i < entries.length; i++) {
+        const entry = entries[i];
+        const userElement = entry.querySelector('td span.printuser a');
+        const userId = parseUserElement(userElement);
+        users.push(userId);
+      }
+
+      // If there's a pager, there are multiple pages, iterate through each one.
+      // We only try this on the first iteration, obviously.
+      if (page === 1) {
+        const pagerElement = html.querySelector('.pager');
+        if (pagerElement === null) {
+          // no more pages
+          break;
+        }
+
+        // First, get the maximum number of pages.
+        // The pager is laid out like this:
+        // [previous] [1] [2] ... [398] [399] [400] [401] [402] ... [998] [999] [next]
+        //
+        // Where the page number buttons (and number of them) differ depending on one's position.
+        // However, it always ends with "next", and second-to-last is the final page number.
+        // We can use this to get the last page number.
+        const buttonChildren = pagerElement.querySelectorAll('.target');
+        const lastButton = buttonChildren[buttonChildren.length - 2];
+        maxPages = parseInt(lastButton.value);
+        if (isNaN(maxPages)) {
+          throw new Error(`Invalid value for page index: ${lastButton.value}`);
+        }
+      }
+
+      page++;
+    } while (page <= maxPages); // 1-indexing
+
     return users;
   }
 
