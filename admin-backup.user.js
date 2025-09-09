@@ -530,8 +530,8 @@ async function fetchThemesAndLayouts() {
     console.debug('Fetching source for theme ID', themeId);
     const html = await requestModuleHtml('managesite/themes/ManageSiteEditCustomThemeModule', { themeId });
     const nameElement = html.querySelector('form input[name=name]');
-    const extendsElement = html.querySelector('form .parentTheme option[selected]');
-    const layoutElement = html.querySelector('form .layoutId option[selected]');
+    const extendsElement = html.querySelector('form select[name=parentTheme] option[selected]');
+    const layoutElement = html.querySelector('form select[name=layoutId] option[selected]');
     const codeElement = html.getElementById('sm-csscode');
 
     themes.push({
