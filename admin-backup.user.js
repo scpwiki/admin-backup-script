@@ -392,6 +392,7 @@ async function fetchSiteMembers() {
   async function fetchUsers(module) {
     console.info(`Requesting user data from module ${module}`);
 
+    const users = [];
     let page = 1;
     let maxPages;
 
@@ -399,7 +400,6 @@ async function fetchSiteMembers() {
       console.debug(`Retrieving page ${page} of ${maxPages || 'unknown'}`);
       const html = await requestModuleHtml(module, { page });
       const entries = html.querySelectorAll('table tr');
-      const users = [];
       // skip the first row, is header
       for (let i = 1; i < entries.length; i++) {
         const entry = entries[i];
