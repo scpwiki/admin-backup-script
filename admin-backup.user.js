@@ -287,6 +287,32 @@ async function fetchAccessPolicy() {
   };
 }
 
+async function fetchHttpsPolicy() {
+  console.info('Fetching HTTPS settings');
+  const html = await requestModuleHtml('managesite/ManageSiteSecureAccessModule');
+  const element = html.getElementById('sm-ssl-mode-select');
+  for (const option of element.children) {
+    // options are:
+    // ''         - disabled
+    // 'ssl'      - HTTP & HTTPS
+    // 'ssl_only' - HTTPS only
+    if (option.selected) {
+      switch (option.value) {
+        case '':
+          return { http: true, https: false };
+        case 'ssl':
+          return { http: true, https: true };
+        case 'ssl_only':
+          return { http: false, https: true };
+        default:
+          throw new Error(`Unknown value in selected option '${option.value}' for secure access mode`);
+      }
+    }
+  }
+
+  throw new Error("Couldn't find selected option for secure access mode");
+}
+
 async function fetchIcons() {
   console.info('Fetching site icons');
   const filenameRegex = /\/local--\w+\/(\w+\.\w+)\?\d+/;
@@ -494,6 +520,7 @@ async function runBackupInner() {
   const siteInfo = await fetchBasicInfo();
   siteInfo.domains = await fetchDomainSettings();
   siteInfo.access = await fetchAccessPolicy();
+  siteInfo.tls = await fetchHttpsPolicy();
   const icons = await fetchIcons();
   const categories = await fetchCategorySettings();
   const userBans = await fetchUserBans();
