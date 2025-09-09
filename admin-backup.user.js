@@ -42,8 +42,6 @@ function parseDateElement(element) {
 }
 
 function parseRating(value) {
-  console.debug('Parsing a rating string', value);
-
   // Example strings:
   // - draP (disabled)
   // - raP  (default/inherited)
@@ -106,8 +104,6 @@ function parseRating(value) {
 }
 
 function parsePermissions(enable, value) {
-  console.debug('Parsing permissions string', value);
-
   // Example strings:
   // - v:armo;e:m;c:m;m:m;d:m;a:m;r:m;z:m;o:rm
   // - v:armo;c:;e:;m:;d:;a:;r:;z:;o:
@@ -266,6 +262,8 @@ async function fetchCategorySettings() {
 
   // Fetch category JSON
   const result = await requestModule('managesite/ManageSiteLicenseModule');
+  const rawCategories = result['categories'];
+  console.debug(rawCategories);
 
   // License values
   const html = parseHtml(result['body']);
@@ -281,7 +279,7 @@ async function fetchCategorySettings() {
 
   // Build category data
   const categories = {};
-  for (const raw of result['categories']) {
+  for (const raw of rawCategories) {
     categories[raw.name] = {
       id: raw.categry_id,
       name: raw.name,
