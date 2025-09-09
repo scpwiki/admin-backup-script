@@ -42,6 +42,11 @@ function parseDateElement(element) {
 }
 
 function parseRating(value) {
+  // Special case
+  if (!value) {
+    return { enable: 'default' };
+  }
+
   // Example strings:
   // - draP (disabled)
   // - raP  (default/inherited)
