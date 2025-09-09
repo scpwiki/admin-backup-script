@@ -359,13 +359,11 @@ async function fetchIcons() {
     return { filename, blob };
   }
 
-  const [main, ios, windows] = await Promise.all([
+  return Promise.all([
     fetchIcon('managesite/icons/ManageSiteFaviconModule'),
     fetchIcon('managesite/icons/ManageSiteIosIconModule'),
     fetchIcon('managesite/icons/ManageSiteWindowsIconModule'),
   ]);
-
-  return { main, ios, windows };
 }
 
 async function fetchCategorySettings() {
@@ -551,28 +549,30 @@ async function runBackupInner() {
 
   // Build and download ZIP
   const zipFiles = [
-    // JSON files
     { name: 'site.json', input: JSON.stringify(siteInfo) },
     { name: 'categories.json', input: JSON.stringify(categories) },
     { name: 'bans.json', input: JSON.stringify({ user: userBans, ip: ipBans }) },
     { name: 'members.json', input: JSON.stringify(members) },
-
-    // favicons
-    { name: icons.main.filename, input: icons.main.blob },
-    { name: icons.ios.filename, input: icons.ios.blob },
-    { name: icons.windows.filename, input: icons.windows.blob },
   ];
+
+  // Add favicons
+  for (const icon of icons) {
+    if (icon !== null) {
+      zipFiles.push({ name: icon.filename, input: icon.blob });
+    }
+  };
 
   console.info('Building output ZIP');
   const { downloadZip } = await import('https://cdn.jsdelivr.net/npm/client-zip/index.js');
   const zipBlob = await downloadZip(zipFiles).blob();
   promptFileDownload(`${siteInfo.slug}.zip`, zipBlob);
-
-  // Deallocate blobs
-  URL.revokeObjectURL(icons.main.blob);
-  URL.revokeObjectURL(icons.ios.blob);
-  URL.revokeObjectURL(icons.windows.blob);
   URL.revokeObjectURL(zipBlob);
+
+  for (const icon of icons) {
+    if (icon !== null) {
+      URL.revokeObjectURL(icon.blob);
+    }
+  }
 }
 
 async function runBackup(backupButton, backupProgress) {
