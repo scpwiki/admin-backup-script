@@ -736,8 +736,6 @@ async function runBackup(backupButton, backupProgress) {
 
   try {
     await runBackupInner();
-  } catch (error) {
-    alert(`Error while running backup:\n\n${error}`);
   } finally {
     backupButton.innerText = 'Run Admin Panel Backup';
     backupButton.removeAttribute('disabled');
