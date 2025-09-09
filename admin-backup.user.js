@@ -197,8 +197,8 @@ async function requestModule(moduleName, params=null) {
   return result;
 }
 
-async function requestModuleHtml(moduleName) {
-  const result = await requestModule(moduleName);
+async function requestModuleHtml(moduleName, params=null) {
+  const result = await requestModule(moduleName, params);
   return parseHtml(result['body']);
 }
 
