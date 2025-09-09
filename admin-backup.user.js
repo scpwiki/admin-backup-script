@@ -452,7 +452,7 @@ async function fetchCategorySettings() {
   // Fetch category JSON
   const result = await requestModule('managesite/ManageSiteLicenseModule');
   const rawCategories = result['categories'];
-  console.debug(rawCategories);
+  console.debug('categories', rawCategories);
 
   // License values
   console.info('Fetching license data');
