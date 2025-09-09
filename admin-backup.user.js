@@ -510,13 +510,15 @@ async function fetchCategorySettings() {
   return categories;
 }
 
-async function fetchThemes() {
+async function fetchThemesAndLayouts() {
   console.info('Fetching Wikidot theme data');
   const customThemeRegex = /WIKIDOT\.modules\.ManageSiteCustomThemesModule\.listeners\.editTheme\(event, (\d+)\)/;
   const html = await requestModuleHtml('managesite/themes/ManageSiteCustomThemesModule');
 
   const themeButtons = html.querySelectorAll('table td a.btn-success');
   const themes = [];
+  let layouts = null;
+
   for (const themeButton of themeButtons) {
     const customThemeCallback = themeButton.getAttribute('onclick');
     const match = customThemeCallback.match(customThemeRegex);
@@ -534,7 +536,7 @@ async function fetchThemes() {
 
     themes.push({
       name: nameElement.value,
-      css: codeElement.innerText,
+      code: codeElement.innerText,
       layout: {
         id: parseInt(layoutElement.value),
         name: layoutElement.innerText,
@@ -544,8 +546,33 @@ async function fetchThemes() {
         name: extendsElement.innerText,
       },
     });
+
+    // First iteration only, fetch all the layout data
+    if (layouts === null) {
+      layouts = [];
+      const layoutElements = html.querySelectorAll('form .layoutId option');
+      for (const element of layoutElements) {
+        const layoutId = parseInt(element.value);
+        console.debug('Fetching source for layout ID', layoutId);
+        const html = requestModuleHtml('managesite/themes/ManageSiteEditCustomLayoutModule', { layoutId });
+        const nameElement = html.querySelector('input[name=layout-name]');
+        const codeElement = html.getElementById('sm-layoutcode');
+        const usesBootstrap = html.querySelector('input[name=use-bootstrap]').checked;
+        const bootstrapVersionElement = html.querySelector('select[name=bootstrap-version] option[selected]');
+
+        layouts.push({
+          id: layoutId,
+          name: nameElement.value,
+          bootstrap: usesBootstrap
+            ? bootstrapVersionElement.value
+            : null,
+          code: codeElement.innerText,
+        });
+      }
+    }
   }
-  return themes;
+
+  return { themes, layouts };
 }
 
 async function fetchUserBans() {
@@ -663,7 +690,7 @@ async function runBackupInner() {
   siteInfo.blockLinks = await fetchBlockLinkPolicy();
   const icons = await fetchIcons();
   const categories = await fetchCategorySettings();
-  const themes = await fetchThemes();
+  const { themes, layouts } = await fetchThemesAndLayouts();
   const userBans = await fetchUserBans();
   const ipBans = await fetchIpBans();
   const members = await fetchSiteMembers();
@@ -674,6 +701,7 @@ async function runBackupInner() {
     { name: 'site.json', input: JSON.stringify(siteInfo) },
     { name: 'categories.json', input: JSON.stringify(categories) },
     { name: 'themes.json', input: JSON.stringify(themes) },
+    { name: 'layouts.json', input: JSON.stringify(layouts) },
     { name: 'bans.json', input: JSON.stringify({ user: userBans, ip: ipBans }) },
     { name: 'members.json', input: JSON.stringify(members) },
   ];
