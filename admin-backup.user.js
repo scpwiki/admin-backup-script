@@ -333,6 +333,52 @@ async function fetchApiAccess() {
   };
 }
 
+async function fetchUserIconPolicy() {
+  console.info('Fetching user icon policy');
+  const html = await requestModuleHtml('managesite/ManageSiteUserIconsModule');
+  const element = html.querySelector('#sm-usericons-form input[checked]');
+  switch (element.value) {
+    // "Avatar, Karma, Pro icons"
+    case 'aks':
+      return {
+        avatar: true,
+        karma: true,
+        pro: true,
+      };
+    // "avatar, Pro icons (skip karma)"
+    case 'as':
+      return {
+        avatar: true,
+        karma: false,
+        pro: true,
+      };
+    // "avatar, karma (skip Pro icons)"
+    case 'ak':
+      return {
+        avatar: true,
+        karma: true,
+        pro: false,
+      };
+    // "only avatar"
+    case 'a':
+      return {
+        avatar: true,
+        karma: false,
+        pro: false,
+      };
+    // "just names, nothing graphical"
+    case '':
+      return {
+        avatar: false,
+        karma: false,
+        pro: false,
+      };
+    // error
+    default:
+      throw new Error(`Unexpected user icon display value: '${element.value}'`);
+  }
+}
+
 async function fetchBlockLinkPolicy() {
   console.info('Fetching link block policy');
   const html = await requestModuleHtml('managesite/abuse/ManageSiteOptionAbuseModule');
@@ -556,6 +602,7 @@ async function runBackupInner() {
   siteInfo.access = await fetchAccessPolicy();
   siteInfo.tls = await fetchHttpsPolicy();
   siteInfo.api = await fetchApiAccess();
+  siteInfo.userIcons = await fetchUserIconPolicy();
   siteInfo.blockLinks = await fetchBlockLinkPolicy();
   const icons = await fetchIcons();
   const categories = await fetchCategorySettings();
