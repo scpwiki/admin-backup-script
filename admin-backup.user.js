@@ -265,6 +265,7 @@ async function fetchDomainSettings() {
 async function fetchAccessPolicy() {
   console.info('Fetching access policy');
   const html = await requestModuleHtml('managesite/ManageSiteAccessPolicyModule');
+  const accessModeElement = html.querySelector('#sm-private-form input[type=radio][checked]');
   const enableApplications = html.getElementById('sm-membership-apply').checked;
   const autoAccept = html.getElementById('sm-membership-automatic').value;
   const enablePassword = html.getElementById('sm-membership-password').checked;
@@ -274,7 +275,24 @@ async function fetchAccessPolicy() {
   // ^ cross-site includes
   const allowHotlinks = html.getElementById('sm-allow-hotlinking-checkbox').checked;
   // NOTE: private site options are not being saved
+
+  let accessMode;
+  switch (accessModeElement.id) {
+    case 'sm-access-open':
+      accessMode = 'open';
+      break;
+    case 'sm-access-closed':
+      accessMode = 'closed';
+      break;
+    case 'sm-access-private':
+      accessMode = 'private';
+      break;
+    default:
+      throw new Error(`Unknown selected access mode ID: ${accessModeElement.id}`);
+  }
+
   return {
+    accessMode,
     enableApplications,
     autoAccept,
     membershipPassword: {
