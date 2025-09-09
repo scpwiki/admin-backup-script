@@ -512,22 +512,12 @@ async function fetchCategorySettings() {
 
 async function fetchThemesAndLayouts() {
   console.info('Fetching Wikidot theme data');
-  const customThemeRegex = /WIKIDOT\.modules\.ManageSiteCustomThemesModule\.listeners\.editTheme\(event, (\d+)\)/;
+  const regex = /WIKIDOT\.modules\.ManageSiteCustomThemesModule\.listeners\.edit(Theme|Layout)\(event, (\d+)\)/;
   const html = await requestModuleHtml('managesite/themes/ManageSiteCustomThemesModule');
-
-  const themeButtons = html.querySelectorAll('table td a.btn-success');
   const themes = [];
-  let layouts = null;
+  const layouts = [];
 
-  for (const themeButton of themeButtons) {
-    const customThemeCallback = themeButton.getAttribute('onclick');
-    const match = customThemeCallback.match(customThemeRegex);
-    if (match === null) {
-      throw new Error(`No regex match for Wikidot theme ID in callback: ${customThemeCallback}`);
-    }
-
-    const themeId = parseInt(match[1]);
-    console.debug('Fetching source for theme ID', themeId);
+  async function fetchTheme(themeId) {
     const html = await requestModuleHtml('managesite/themes/ManageSiteEditCustomThemeModule', { themeId });
     const nameElement = html.querySelector('form input[name=name]');
     const extendsElement = html.querySelector('form select[name=parentTheme] option[selected]');
@@ -546,29 +536,43 @@ async function fetchThemesAndLayouts() {
         name: extendsElement.innerText,
       },
     });
+  }
 
-    // First iteration only, fetch all the layout data
-    if (layouts === null) {
-      layouts = [];
-      const layoutElements = html.querySelectorAll('form .layoutId option');
-      for (const element of layoutElements) {
-        const layoutId = parseInt(element.value);
-        console.debug('Fetching source for layout ID', layoutId);
-        const html = requestModuleHtml('managesite/themes/ManageSiteEditCustomLayoutModule', { layoutId });
-        const nameElement = html.querySelector('input[name=layout-name]');
-        const codeElement = html.getElementById('sm-layoutcode');
-        const usesBootstrap = html.querySelector('input[name=use-bootstrap]').checked;
-        const bootstrapVersionElement = html.querySelector('select[name=bootstrap-version] option[selected]');
+  async function fetchLayout(layoutId) {
+    const html = await requestModuleHtml('managesite/themes/ManageSiteEditCustomLayoutModule', { layoutId });
+    const nameElement = html.querySelector('input[name=layout-name]');
+    const codeElement = html.getElementById('sm-layoutcode');
+    const usesBootstrap = html.querySelector('input[name=use-bootstrap]').checked;
+    const bootstrapVersionElement = html.querySelector('select[name=bootstrap-version] option[selected]');
 
-        layouts.push({
-          id: layoutId,
-          name: nameElement.value,
-          bootstrap: usesBootstrap
-            ? bootstrapVersionElement.value
-            : null,
-          code: codeElement.innerText,
-        });
-      }
+    layouts.push({
+      id: layoutId,
+      name: nameElement.value,
+      bootstrap: usesBootstrap
+        ? bootstrapVersionElement.value
+        : null,
+      code: codeElement.innerText,
+    });
+  }
+
+  const editButtons = html.querySelectorAll('table td a.btn-success');
+  for (const editButton of editButtons) {
+    const callback = editButton.getAttribute('onclick');
+    const match = callback.match(regex);
+    if (match === null) {
+      throw new Error(`No regex match for callback: ${callback}`);
+    }
+
+    const id = parseInt(match[2]);
+    switch (match[1]) {
+      case 'Theme':
+        await fetchTheme(id);
+        break;
+      case 'Layout':
+        await fetchLayout(id);
+        break;
+      default:
+        throw new Error(`Somehow got an invalid first group: ${match[1]}`);
     }
   }
 
