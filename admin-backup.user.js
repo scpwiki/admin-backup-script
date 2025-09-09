@@ -262,6 +262,31 @@ async function fetchDomainSettings() {
   };
 }
 
+async function fetchAccessPolicy() {
+  console.info('Fetching access policy');
+  const html = await requestModuleHtml('managesite/ManageSiteAccessPolicyModule');
+  const enableApplications = html.getElementById('sm-membership-apply').checked;
+  const autoAccept = html.getElementById('sm-membership-automatic').value;
+  const enablePassword = html.getElementById('sm-membership-password').checked;
+  const passwordValue = html.querySelector('input[name=password]').value;
+  const blockClones = html.getElementById('sm-block-clone-checkbox').checked;
+  const blockIncludes = html.getElementById('sm-block-csi-checkbox').checked;
+  // ^ cross-site includes
+  const allowHotlinks = html.getElementById('sm-allow-hotlinking-checkbox').checked;
+  // NOTE: private site options are not being saved
+  return {
+    enableApplications,
+    autoAccept,
+    membershipPassword: {
+      enable: enablePassword,
+      value: passwordValue,
+    },
+    blockClones,
+    blockIncludes,
+    allowHotlinks,
+  };
+}
+
 async function fetchCategorySettings() {
   console.info('Fetching category settings');
 
@@ -364,31 +389,6 @@ async function fetchIpBans() {
     });
   }
   return bans;
-}
-
-async function fetchAccessPolicy() {
-  console.info('Fetching access policy');
-  const html = await requestModuleHtml('managesite/ManageSiteAccessPolicyModule');
-  const enableApplications = html.getElementById('sm-membership-apply').checked;
-  const autoAccept = html.getElementById('sm-membership-automatic').value;
-  const enablePassword = html.getElementById('sm-membership-password').checked;
-  const passwordValue = html.querySelector('input[name=password]').value;
-  const blockClones = html.getElementById('sm-block-clone-checkbox').checked;
-  const blockIncludes = html.getElementById('sm-block-csi-checkbox').checked;
-  // ^ cross-site includes
-  const allowHotlinks = html.getElementById('sm-allow-hotlinking-checkbox').checked;
-  // NOTE: private site options are not being saved
-  return {
-    enableApplications,
-    autoAccept,
-    membershipPassword: {
-      enable: enablePassword,
-      value: passwordValue,
-    },
-    blockClones,
-    blockIncludes,
-    allowHotlinks,
-  };
 }
 
 async function fetchSiteMembers() {
