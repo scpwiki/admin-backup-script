@@ -454,13 +454,7 @@ async function fetchSiteMembers() {
 
 // Main
 
-async function runBackup(backupButton) {
-  await showConfirmation('run backup', 'Are you sure you want to start an admin panel backup?');
-
-  console.info('Starting backup!');
-  backupButton.innerText = 'Backup Running';
-  backupButton.setAttribute('disabled', '');
-
+async function runBackupInner() {
   // Fetch data
   const siteInfo = await fetchBasicInfo();
   siteInfo.domains = await fetchDomainSettings();
@@ -484,16 +478,36 @@ async function runBackup(backupButton) {
   const zipBlob = await downloadZip(zipFiles).blob();
   promptFileDownload(`${siteInfo.slug}.zip`, zipBlob);
   URL.revokeObjectURL(zipBlob);
+}
 
-  backupButton.innerText = 'Run Admin Panel Backup';
-  backupButton.removeAttribute('disabled');
+async function runBackup(backupButton, backupProgress) {
+  await showConfirmation('run backup', 'Are you sure you want to start an admin panel backup?');
+
+  console.info('Starting backup!');
+  backupButton.innerText = 'Backup Running';
+  backupButton.setAttribute('disabled', '');
+  backupProgress.classList.remove('hidden');
+
+  try {
+    await runBackupInner();
+  } catch (error) {
+    alert(`Error while running backup:\n\n${error}`);
+  } finally {
+    backupButton.innerText = 'Run Admin Panel Backup';
+    backupButton.removeAttribute('disabled');
+    backupProgress.classList.add('hidden');
+  }
 }
 
 function main() {
+  const backupProgress = document.createElement('progress');
+  backupProgress.classList.add('hidden');
+  backupProgress.style = 'margin-left: 1em';
+
   const backupButton = document.createElement('button');
   backupButton.innerText = 'Run Admin Panel Backup';
   backupButton.classList.add('btn');
-  backupButton.addEventListener('click', () => runBackup(backupButton));
+  backupButton.addEventListener('click', () => runBackup(backupButton, backupProgress));
 
   const headerElement = document.querySelector('.page-header');
   if (!headerElement) {
@@ -501,6 +515,7 @@ function main() {
   }
 
   headerElement.appendChild(backupButton);
+  headerElement.appendChild(backupProgress);
 }
 
 main();
