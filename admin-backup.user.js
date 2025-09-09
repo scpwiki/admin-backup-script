@@ -402,7 +402,7 @@ async function fetchSiteMembers() {
     let maxPages;
 
     do {
-      console.debug(`Retrieving page ${page} of ${maxPages || 'unknown'}`);
+      console.debug(`Retrieving page ${page} of ${maxPages || '<unknown>'}`);
       const html = await requestModuleHtml(module, { page });
       const entries = html.querySelectorAll('table tr');
       // skip the first row, is header
@@ -431,9 +431,10 @@ async function fetchSiteMembers() {
         // We can use this to get the last page number.
         const buttonChildren = pagerElement.querySelectorAll('.target');
         const lastButton = buttonChildren[buttonChildren.length - 2];
-        maxPages = parseInt(lastButton.value);
+        const lastButtonText = lastButton.innerText
+        maxPages = parseInt(lastButtonText);
         if (isNaN(maxPages)) {
-          throw new Error(`Invalid value for page index: ${lastButton.value}`);
+          throw new Error(`Invalid value for page index: ${lastButtonText}`);
         }
       }
 
