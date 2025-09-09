@@ -287,6 +287,41 @@ async function fetchAccessPolicy() {
   };
 }
 
+async function fetchIcons() {
+  console.info('Fetching site icons');
+  const filenameRegex = /\/local--\w+\/(\w+\.\w+)\?\d+/;
+
+  async function fetchIcon(module) {
+    console.info(`Fetching favicon for module ${module}`);
+    const html = await requestModuleHtml(module);
+    const alreadyUploadedElement = html.querySelector('h2');
+    if (alreadyUploadedElement === null) {
+      // There is an <h2> with "You have already uploaded a favicon"
+      // or similar if an icon has been uploaded. So if it's absent,
+      // then we say no icon has been uploaded and can return null.
+      return null;
+    }
+
+    const imageElement = html.querySelector('td img');
+    const filename = imageElement.src.match(filenameRegex)[1];
+    const response = await fetch(imageElement.src);
+    if (response.status !== 200) {
+      throw new Error(`Unable to fetch image, got HTTP ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    return { filename, blob };
+  }
+
+  const [main, ios, windows] = await Promise.all([
+    fetchIcon('managesite/icons/ManageSiteFaviconModule'),
+    fetchIcon('managesite/icons/ManageSiteIosIconModule'),
+    fetchIcon('managesite/icons/ManageSiteWindowsIconModule'),
+  ]);
+
+  return { main, ios, windows };
+}
+
 async function fetchCategorySettings() {
   console.info('Fetching category settings');
 
@@ -459,6 +494,7 @@ async function runBackupInner() {
   const siteInfo = await fetchBasicInfo();
   siteInfo.domains = await fetchDomainSettings();
   siteInfo.access = await fetchAccessPolicy();
+  const icons = await fetchIcons();
   const categories = await fetchCategorySettings();
   const userBans = await fetchUserBans();
   const ipBans = await fetchIpBans();
@@ -467,16 +503,27 @@ async function runBackupInner() {
 
   // Build and download ZIP
   const zipFiles = [
+    // JSON files
     { name: 'site.json', input: JSON.stringify(siteInfo) },
     { name: 'categories.json', input: JSON.stringify(categories) },
     { name: 'bans.json', input: JSON.stringify({ user: userBans, ip: ipBans }) },
     { name: 'members.json', input: JSON.stringify(members) },
+
+    // favicons
+    { name: icons.main.filename, input: icons.main.blob },
+    { name: icons.ios.filename, input: icons.ios.blob },
+    { name: icons.windows.filename, input: icons.windows.blob },
   ];
 
   console.info('Building output ZIP');
   const { downloadZip } = await import('https://cdn.jsdelivr.net/npm/client-zip/index.js');
   const zipBlob = await downloadZip(zipFiles).blob();
   promptFileDownload(`${siteInfo.slug}.zip`, zipBlob);
+
+  // Deallocate blobs
+  URL.revokeObjectURL(icons.main.blob);
+  URL.revokeObjectURL(icons.ios.blob);
+  URL.revokeObjectURL(icons.windows.blob);
   URL.revokeObjectURL(zipBlob);
 }
 
