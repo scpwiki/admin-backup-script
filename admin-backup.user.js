@@ -455,6 +455,7 @@ async function fetchCategorySettings() {
   console.debug(rawCategories);
 
   // License values
+  console.info('Fetching license data');
   const html = parseHtml(result['body']);
   const licenseElements = html.querySelectorAll('#sm-license-lic option');
   const licenses = {};
@@ -507,6 +508,44 @@ async function fetchCategorySettings() {
   }
 
   return categories;
+}
+
+async function fetchThemes() {
+  console.info('Fetching Wikidot theme data');
+  const customThemeRegex = /WIKIDOT\.modules\.ManageSiteCustomThemesModule\.listeners\.editTheme\(event, (\d+)\)/;
+  const html = await requestModuleHtml('managesite/themes/ManageSiteCustomThemesModule');
+
+  const themeButtons = html.querySelectorAll('table td a.btn-success');
+  const themes = [];
+  for (const themeButton of themeButtons) {
+    const customThemeCallback = themeButton.getAttribute('onclick');
+    const match = customThemeCallback.match(customThemeRegex);
+    if (match === null) {
+      throw new Error(`No regex match for Wikidot theme ID in callback: ${customThemeCallback}`);
+    }
+
+    const themeId = parseInt(match[1]);
+    console.debug('Fetching source for theme ID', themeId);
+    const html = await requestModuleHtml('managesite/themes/ManageSiteEditCustomThemeModule', { themeId });
+    const nameElement = html.querySelector('form input[name=name]');
+    const extendsElement = html.querySelector('form .parentTheme option[selected]');
+    const layoutElement = html.querySelector('form .layoutId option[selected]');
+    const codeElement = html.getElementById('sm-csscode');
+
+    themes.push({
+      name: nameElement.value,
+      css: codeElement.innerText,
+      layout: {
+        id: parseInt(layoutElement.value),
+        name: layoutElement.innerText,
+      },
+      extendsTheme: {
+        id: parseInt(extendsElement.value),
+        name: extendsElement.innerText,
+      },
+    });
+  }
+  return themes;
 }
 
 async function fetchUserBans() {
@@ -624,6 +663,7 @@ async function runBackupInner() {
   siteInfo.blockLinks = await fetchBlockLinkPolicy();
   const icons = await fetchIcons();
   const categories = await fetchCategorySettings();
+  const themes = await fetchThemes();
   const userBans = await fetchUserBans();
   const ipBans = await fetchIpBans();
   const members = await fetchSiteMembers();
@@ -633,6 +673,7 @@ async function runBackupInner() {
   const zipFiles = [
     { name: 'site.json', input: JSON.stringify(siteInfo) },
     { name: 'categories.json', input: JSON.stringify(categories) },
+    { name: 'themes.json', input: JSON.stringify(themes) },
     { name: 'bans.json', input: JSON.stringify({ user: userBans, ip: ipBans }) },
     { name: 'members.json', input: JSON.stringify(members) },
   ];
@@ -642,7 +683,7 @@ async function runBackupInner() {
     if (icon !== null) {
       zipFiles.push({ name: icon.filename, input: icon.blob });
     }
-  };
+  }
 
   console.info('Building output ZIP');
   const { downloadZip } = await import('https://cdn.jsdelivr.net/npm/client-zip/index.js');
