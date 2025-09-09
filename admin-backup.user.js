@@ -333,6 +333,22 @@ async function fetchApiAccess() {
   };
 }
 
+async function fetchBlockLinkPolicy() {
+  console.info('Fetching link block policy');
+  const html = await requestModuleHtml('managesite/abuse/ManageSiteOptionAbuseModule');
+  const anonymousElement = html.querySelector('input[name=blockLink]');
+  const karmaElement = html.querySelector('select[name=karmaLevel] option[selected]');
+  const blockKarmaLevel = parseInt(karmaElement.value);
+  if (isNaN(blockKarmaLevel)) {
+    throw new Error(`Invalid karma level value: ${karmaElement.value}`);
+  }
+
+  return {
+    blockAnonymous: anonymousElement.checked,
+    blockKarmaLevel,
+  };
+}
+
 async function fetchIcons() {
   console.info('Fetching site icons');
   const filenameRegex = /\/local--\w+\/(\w+\.\w+)\?\d+/;
@@ -540,6 +556,7 @@ async function runBackupInner() {
   siteInfo.access = await fetchAccessPolicy();
   siteInfo.tls = await fetchHttpsPolicy();
   siteInfo.api = await fetchApiAccess();
+  siteInfo.blockLinks = await fetchBlockLinkPolicy();
   const icons = await fetchIcons();
   const categories = await fetchCategorySettings();
   const userBans = await fetchUserBans();
