@@ -525,6 +525,7 @@ async function fetchThemesAndLayouts() {
     const codeElement = html.getElementById('sm-csscode');
 
     themes.push({
+      id: themeId,
       name: nameElement.value,
       code: codeElement.innerText,
       layout: {
