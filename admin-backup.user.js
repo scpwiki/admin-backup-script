@@ -42,6 +42,8 @@ function parseDateElement(element) {
 }
 
 function parseRating(value) {
+  console.debug('Parsing a rating string', value);
+
   // Example strings:
   // - draP (disabled)
   // - raP  (default/inherited)
@@ -104,6 +106,8 @@ function parseRating(value) {
 }
 
 function parsePermissions(enable, value) {
+  console.debug('Parsing permissions string', value);
+
   // Example strings:
   // - v:armo;e:m;c:m;m:m;d:m;a:m;r:m;z:m;o:rm
   // - v:armo;c:;e:;m:;d:;a:;r:;z:;o:
@@ -182,6 +186,7 @@ function showConfirmation(actionName, content) {
 }
 
 async function requestModule(moduleName, params=null) {
+  console.debug('Making an AJAX module request', moduleName, params);
   const result = await new Promise((resolve) => {
     OZONE.ajax.requestModule(moduleName, params, resolve);
   });
@@ -207,6 +212,8 @@ function promptFileDownload(filename, blob) {
 // Backup tasks
 
 async function fetchBasicInfo() {
+  console.info('Fetching basic site information');
+
   // From variables
   const id = WIKIREQUEST.info.siteId;
   const slug = WIKIREQUEST.info.domain.replace(/\.wikidot\.com$/, '');
@@ -235,6 +242,7 @@ async function fetchBasicInfo() {
 }
 
 async function fetchDomainSettings() {
+  console.info('Fetching domain settings');
   const html = await requestModuleHtml('managesite/ManageSiteDomainModule');
   const customDomain = html.getElementById('sm-domain-field').value;
   const customDomainOnly = html.getElementById('sm-domain-default').checked;
@@ -254,6 +262,8 @@ async function fetchDomainSettings() {
 }
 
 async function fetchCategorySettings() {
+  console.info('Fetching category settings');
+
   // Fetch category JSON
   const result = await requestModule('managesite/ManageSiteLicenseModule');
 
@@ -313,6 +323,7 @@ async function fetchCategorySettings() {
 }
 
 async function fetchUserBans() {
+  console.info('Fetching user ban data');
   const html = await requestModuleHtml('managesite/blocks/ManageSiteUserBlocksModule');
   const ubans = html.querySelectorAll('table tr');
   const bans = [];
@@ -332,6 +343,7 @@ async function fetchUserBans() {
 }
 
 async function fetchIpBans() {
+  console.info('Fetching IP ban data');
   const html = await requestModuleHtml('managesite/blocks/ManageSiteIpBlocksModule');
   const ibans = html.querySelectorAll('table tr');
 
@@ -352,6 +364,7 @@ async function fetchIpBans() {
 }
 
 async function fetchAccessPolicy() {
+  console.info('Fetching access policy');
   const html = await requestModuleHtml('managesite/ManageSiteAccessPolicyModule');
   const enableApplications = html.getElementById('sm-membership-apply').checked;
   const autoAccept = html.getElementById('sm-membership-automatic').value;
@@ -376,11 +389,16 @@ async function fetchAccessPolicy() {
 }
 
 async function fetchSiteMembers() {
+  console.info('Fetching site members');
+
   async function fetchUsers(module) {
+    console.info(`Requesting user data from module ${module}`);
+
     let page = 1;
     let maxPages;
 
     do {
+      console.debug(`Retrieving page ${page} of ${maxPages || 'unknown'}`);
       const html = await requestModuleHtml(module, { page });
       const entries = html.querySelectorAll('table tr');
       const users = [];
@@ -427,7 +445,6 @@ async function fetchSiteMembers() {
     fetchUsers('managesite/members/ManageSiteModeratorsModule'),
     fetchUsers('managesite/members/ManageSiteAdminsModule'),
   ]);
-  console.log( { members, moderators, admins });
   return { members, moderators, admins };
 }
 
@@ -436,6 +453,7 @@ async function fetchSiteMembers() {
 async function runBackup(backupButton) {
   await showConfirmation('run backup', 'Are you sure you want to start an admin panel backup?');
 
+  console.info('Starting backup!');
   backupButton.innerText = 'Backup Running';
   backupButton.setAttribute('disabled', '');
 
@@ -457,6 +475,7 @@ async function runBackup(backupButton) {
     { name: 'members.json', input: JSON.stringify(members) },
   ];
 
+  console.info('Building output ZIP');
   const { downloadZip } = await import('https://cdn.jsdelivr.net/npm/client-zip/index.js');
   const zipBlob = await downloadZip(zipFiles).blob();
   promptFileDownload(`${siteInfo.slug}.zip`, zipBlob);
