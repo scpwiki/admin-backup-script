@@ -313,6 +313,26 @@ async function fetchHttpsPolicy() {
   throw new Error("Couldn't find selected option for secure access mode");
 }
 
+async function fetchApiAccess() {
+  console.info('Fetching API access settings');
+  const html = await requestModuleHtml('managesite/ManageSiteApiModule');
+  const memberReadElement = html.querySelector('input[name=read-1]');
+  const adminReadElement = html.querySelector('input[name=read-2]');
+  const memberWriteElement = html.querySelector('input[name=write-1]');
+  const adminWriteElement = html.querySelector('input[name=write-2]');
+
+  return {
+    member: {
+      read: memberReadElement.checked,
+      write: memberWriteElement.checked,
+    },
+    admin: {
+      read: adminReadElement.checked,
+      write: adminWriteElement.checked,
+    }
+  };
+}
+
 async function fetchIcons() {
   console.info('Fetching site icons');
   const filenameRegex = /\/local--\w+\/(\w+\.\w+)\?\d+/;
@@ -521,6 +541,7 @@ async function runBackupInner() {
   siteInfo.domains = await fetchDomainSettings();
   siteInfo.access = await fetchAccessPolicy();
   siteInfo.tls = await fetchHttpsPolicy();
+  siteInfo.api = await fetchApiAccess();
   const icons = await fetchIcons();
   const categories = await fetchCategorySettings();
   const userBans = await fetchUserBans();
