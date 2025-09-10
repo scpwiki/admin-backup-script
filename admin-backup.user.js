@@ -296,6 +296,17 @@ async function fetchToolbarSettings() {
   return { showTop, showBottom, promoteSite };
 }
 
+async function fetchUserProfileSettings() {
+  console.info('Fetching user profile settings');
+  const html = await requestModuleHtml('managesite/ManageSiteProfilePagesModule');
+  const enable = html.getElementById('sm-profile-pages-form-enable').checked;
+  const category = html.querySelector('input[name=category]').value;
+  const currentTag = html.querySelector('input[name=tag_current]').value;
+  const formerTag = html.querySelector('input[name=tag_former]').value;
+  const usePopup = html.querySelector('input[name=popup]').value;
+  return { enable, category, currentTag, formerTag, usePopup };
+}
+
 async function fetchAccessPolicy() {
   console.info('Fetching access policy');
   const html = await requestModuleHtml('managesite/ManageSiteAccessPolicyModule');
@@ -723,6 +734,7 @@ async function runBackupInner() {
   const siteInfo = await fetchBasicInfo();
   siteInfo.domains = await fetchDomainSettings();
   siteInfo.toolbar = await fetchToolbarSettings();
+  siteInfo.userProfile = await fetchUserProfileSettings();
   siteInfo.access = await fetchAccessPolicy();
   siteInfo.tls = await fetchHttpsPolicy();
   siteInfo.api = await fetchApiAccess();
