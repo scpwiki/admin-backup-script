@@ -287,6 +287,15 @@ async function fetchDomainSettings() {
   };
 }
 
+async function fetchToolbarSettings() {
+  console.info('Fetching toolbar settings');
+  const html = await requestModuleHtml('managesite/ManageSiteToolbarsModule');
+  const showTop = html.getElementById('sm-show-toolbar-input1').checked;
+  const showBottom = html.getElementById('sm-show-toolbar-input2').checked;
+  const promoteSite = html.getElementById('sm-promote').checked;
+  return { showTop, showBottom, promoteSite };
+}
+
 async function fetchAccessPolicy() {
   console.info('Fetching access policy');
   const html = await requestModuleHtml('managesite/ManageSiteAccessPolicyModule');
@@ -713,6 +722,7 @@ async function runBackupInner() {
   // Fetch data
   const siteInfo = await fetchBasicInfo();
   siteInfo.domains = await fetchDomainSettings();
+  siteInfo.toolbar = await fetchToolbarSettings();
   siteInfo.access = await fetchAccessPolicy();
   siteInfo.tls = await fetchHttpsPolicy();
   siteInfo.api = await fetchApiAccess();
