@@ -210,6 +210,31 @@ function promptFileDownload(filename, blob) {
   link.remove();
 }
 
+async function createZip(files) {
+  console.info('Building output ZIP');
+  const { BlobReader, BlobWriter, TextReader, ZipWriter } = await import('https://cdn.jsdelivr.net/npm/@zip.js/zip.js/index.js');
+
+  const zipFileWriter = new BlobWriter();
+  const zipWriter = new ZipWriter(zipFileWriter);
+  for (const file of files) {
+    const [filename, data] = file;
+
+    if (typeof data === 'object') {
+      const json = JSON.stringify(data);
+      const reader = new TextReader(json);
+      await zipWriter.add(filename, reader);
+    } else if (data instanceof Blob) {
+      const reader = new BlobReader(data);
+      await zipWriter.add(filename, reader);
+    } else {
+      throw new Error(`No handling for data object: ${data}`);
+    }
+  }
+
+  await zipWriter.close();
+  return zipFileWriter.getData();
+}
+
 // Backup tasks
 
 async function fetchBasicInfo() {
@@ -703,24 +728,23 @@ async function runBackupInner() {
 
   // Build and download ZIP
   const zipFiles = [
-    { name: 'site.json', input: JSON.stringify(siteInfo) },
-    { name: 'categories.json', input: JSON.stringify(categories) },
-    { name: 'themes.json', input: JSON.stringify(themes) },
-    { name: 'layouts.json', input: JSON.stringify(layouts) },
-    { name: 'bans.json', input: JSON.stringify({ user: userBans, ip: ipBans }) },
-    { name: 'members.json', input: JSON.stringify(members) },
+    ['site.json', siteInfo],
+    ['categories.json', categories],
+    ['themes.json', themes],
+    ['layouts.json', layouts],
+    ['bans.json', { user: userBans, ip: ipBans }],
+    ['members.json', members],
   ];
 
   // Add favicons
   for (const icon of icons) {
     if (icon !== null) {
-      zipFiles.push({ name: icon.filename, input: icon.blob });
+      zipFiles.push([icon.filename, icon.blob]);
     }
   }
 
   console.info('Building output ZIP');
-  const { downloadZip } = await import('https://cdn.jsdelivr.net/npm/client-zip/index.js');
-  const zipBlob = await downloadZip(zipFiles).blob();
+  const zipBlob = await createZip(zipFiles);
   promptFileDownload(`${siteInfo.slug}.zip`, zipBlob);
   URL.revokeObjectURL(zipBlob);
 
