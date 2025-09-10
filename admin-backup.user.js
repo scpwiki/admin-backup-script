@@ -307,6 +307,14 @@ async function fetchUserProfileSettings() {
   return { enable, category, currentTag, formerTag, usePopup };
 }
 
+async function fetchCustomFooter() {
+  console.info('Fetching custom footer settings');
+  const html = await requestModuleHtml('managesite/ManageSiteCustomFooterModule');
+  const enable = html.getElementById('sm-use-custom-footer').checked;
+  const wikitext = html.getElementById('sm-cutsom-footer-input').innerText;
+  return { enable, wikitext };
+}
+
 async function fetchAccessPolicy() {
   console.info('Fetching access policy');
   const html = await requestModuleHtml('managesite/ManageSiteAccessPolicyModule');
@@ -735,6 +743,7 @@ async function runBackupInner() {
   siteInfo.domains = await fetchDomainSettings();
   siteInfo.toolbar = await fetchToolbarSettings();
   siteInfo.userProfile = await fetchUserProfileSettings();
+  siteInfo.customFooter = await fetchCustomFooter();
   siteInfo.access = await fetchAccessPolicy();
   siteInfo.tls = await fetchHttpsPolicy();
   siteInfo.api = await fetchApiAccess();
