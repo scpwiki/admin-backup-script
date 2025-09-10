@@ -303,7 +303,7 @@ async function fetchUserProfileSettings() {
   const category = html.querySelector('input[name=category]').value;
   const currentTag = html.querySelector('input[name=tag_current]').value;
   const formerTag = html.querySelector('input[name=tag_former]').value;
-  const usePopup = html.querySelector('input[name=popup]').value;
+  const usePopup = html.querySelector('input[name=popup]').checked;
   return { enable, category, currentTag, formerTag, usePopup };
 }
 
