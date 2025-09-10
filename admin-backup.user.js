@@ -9,7 +9,7 @@
 // ==UserScript==
 // @name        Wikidot admin panel backup script
 // @description Backs up information from the admin panel of a Wikidot site
-// @version     v0.1.10
+// @version     v0.1.11
 // @updateURL   https://github.com/scpwiki/admin-backup-script/raw/main/admin-backup.user.js
 // @downloadURL https://github.com/scpwiki/admin-backup-script/raw/main/admin-backup.user.js
 // @include     http://*.wikidot.com/_admin
