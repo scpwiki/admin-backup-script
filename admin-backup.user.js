@@ -108,7 +108,7 @@ function parseRating(value) {
   return { enable, eligibility, visibility, voteType };
 }
 
-function parsePermissions(enable, value) {
+function parsePagePermissions(enable, value) {
   // Example strings:
   // - v:armo;e:m;c:m;m:m;d:m;a:m;r:m;z:m;o:rm
   // - v:armo;c:;e:;m:;d:;a:;r:;z:;o:
@@ -556,7 +556,7 @@ async function fetchCategorySettings() {
       },
       autonumerate: raw.autonumerate,
       rating: parseRating(raw.rating),
-      permissions: parsePermissions(raw.permissions_default, raw.permissions),
+      permissions: parsePagePermissions(raw.permissions_default, raw.permissions),
     };
   }
 
