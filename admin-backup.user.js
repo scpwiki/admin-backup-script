@@ -167,6 +167,55 @@ function parsePagePermissions(enable, value) {
   return permissions;
 }
 
+function parseForumPermissions(value) {
+  // Example strings:
+  // - t:;p:;e:;s:
+  // - t:;p:m;e:o;s:
+  // - t:m;p:rm;e:arm;s:
+
+  // Permission action:
+  //   t - Create new threads
+  //   p - Add posts to existing threads
+  //   e - Edit posts (and thread metadata)
+  //   s - Split threads (unused)
+
+  function parseAction(value) {
+    switch (value) {
+      case 't': return 'createThreads';
+      case 'p': return 'createPosts';
+      case 'e': return 'editPosts';
+      case 's': return undefined;
+    }
+  }
+
+  // User scopes:
+  //   a - Anonymous users (no account)
+  //   r - Registered users (has account)
+  //   m - Site members
+  //   o - Thread creators ("owners"), regardless of the above
+
+  function parseScope(value) {
+    const anonymous = value.includes('a');
+    const registered = value.includes('r');
+    const members = value.includes('m');
+    const threadCreators = value.includes('o');
+    return { anonymous, registered, members, threadCreators };
+  }
+
+  // Parse each permission group
+
+  for (const group of value.split(';')) {
+    const [perm, scope] = group.split(':');
+    const action = parseAction(perm);
+    const options = parseScope(scope);
+    if (action) {
+      permissions[action] = options;
+    }
+  }
+
+  return permissions;
+}
+
 // Utilities
 
 function showConfirmation(actionName, content) {
@@ -735,6 +784,60 @@ async function fetchSiteMembers() {
   return { members, moderators, admins };
 }
 
+async function fetchForumSettings() {
+  const html = await requestModuleHtml('managesite/ManageSiteForumSettingsModule');
+  const nestingLevelSelectElemment = html.getElementById('max-nest-level');
+  const nestingLevelElement = nestingLevelSelectElemment.querySelector('option[selected]');
+  const nestingLevel = parseInt(nestingLevelElement.value);
+
+  const result = await requestModule('managesite/ManageSiteGetForumLayoutModule');
+
+  if (result.groups.length !== result.categories.length) {
+    throw new Error(`Forum structure mismatch: group count ${result.groups.length} != category[] count ${result.categories.lengths}`);
+  }
+
+  const forum = { nestingLevel, groups: [], categories: [] };
+  for (let i = 0; i < result.groups.length; i++) {
+    const { name, description, group_id, visible } = result.groups[i];
+    const categoryGroup = result.categories[i];
+
+    // Add forum group
+    forum.groups.push({
+      groupId: group_id,
+      name,
+      description,
+      visible,
+    });
+
+    // Add individual forum categories within that group
+    for (const category of categoryGroup) {
+      const {
+        name,
+        description,
+        category_id,
+        posts,
+        number_threads,
+        permissions,
+        max_nest_level,
+      } = category;
+
+      forum.categories.push({
+        categoryId: category_id,
+        groupId: group_id,
+        name,
+        description,
+        max_nest_level,
+        stats: {
+          posts,
+          threads: number_threads,
+        },
+        permissions: parseForumPermissions(permissions),
+      });
+    }
+  }
+  return forum;
+}
+
 // Main
 
 async function runBackupInner() {
@@ -755,7 +858,7 @@ async function runBackupInner() {
   const userBans = await fetchUserBans();
   const ipBans = await fetchIpBans();
   const members = await fetchSiteMembers();
-  // TODO other data
+  const forum = await fetchForumSettings();
 
   // Build and download ZIP
   const zipFiles = [
@@ -765,6 +868,7 @@ async function runBackupInner() {
     ['layouts.json', layouts],
     ['bans.json', { user: userBans, ip: ipBans }],
     ['members.json', members],
+    ['forum.json', forum],
   ];
 
   // Add favicons
