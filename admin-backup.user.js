@@ -207,6 +207,7 @@ function parseForumPermissions(value) {
   }
 
   // Parse each permission group
+  const permissions = {};
   for (const group of value.split(';')) {
     const [perm, scope] = group.split(':');
     const action = parseAction(perm);
@@ -215,7 +216,6 @@ function parseForumPermissions(value) {
       permissions[action] = options;
     }
   }
-
   return permissions;
 }
 
