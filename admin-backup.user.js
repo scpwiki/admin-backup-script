@@ -269,7 +269,7 @@ async function requestModuleHtmlPro(moduleName, params=null) {
     return null;
   }
 
-  return parseHtml(body);
+  return parseHtml(html);
 }
 
 function promptFileDownload(filename, blob) {
