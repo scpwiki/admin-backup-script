@@ -856,8 +856,7 @@ async function runBackupInner() {
   const icons = await fetchIcons();
   const categories = await fetchCategorySettings();
   const { themes, layouts } = await fetchThemesAndLayouts();
-  const userBans = await fetchUserBans();
-  const ipBans = await fetchIpBans();
+  const [userBans, ipBans] = await Promise.all([fetchUserBans(), fetchIpBans()]);
   const members = await fetchSiteMembers();
   const forum = await fetchForumSettings();
 
