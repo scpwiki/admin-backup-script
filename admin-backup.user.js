@@ -746,8 +746,14 @@ async function fetchUserBans() {
 async function fetchIpBans() {
   console.info('Fetching IP ban data');
   const html = await requestModuleHtml('managesite/blocks/ManageSiteIpBlocksModule');
-  const ibans = html.querySelectorAll('table tr');
 
+  // if this element is present then there are no bans
+  const noBansElement = html.querySelector('div.alert');
+  if (noBansElement !== null) {
+    return [];
+  }
+
+  const ibans = html.querySelectorAll('table tr');
   // skip the first row, which is a header
   const bans = [];
   for (let i = 1; i < ibans.length; i++) {
