@@ -289,12 +289,12 @@ async function createZip(files) {
   for (const file of files) {
     const [filename, data] = file;
 
-    if (typeof data === 'object') {
+    if (data instanceof Blob) {
+      const reader = new BlobReader(data);
+      await zipWriter.add(filename, reader);
+    } else if (typeof data === 'object') {
       const json = JSON.stringify(data);
       const reader = new TextReader(json);
-      await zipWriter.add(filename, reader);
-    } else if (data instanceof Blob) {
-      const reader = new BlobReader(data);
       await zipWriter.add(filename, reader);
     } else {
       throw new Error(`No handling for data object: ${data}`);
