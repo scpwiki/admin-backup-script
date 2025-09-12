@@ -254,6 +254,17 @@ async function requestModuleHtml(moduleName, params=null) {
   return parseHtml(result['body']);
 }
 
+async function requestModuleHtmlPro(moduleName, params=null) {
+  const result = await requestModule(moduleName, params);
+  const html = result['body'];
+  if (html.includes('http://www.wikidot.com/account/upgrade')) {
+    console.warn(`Module ${moduleName} yielded feature unavailable (needs paid plan)`);
+    return null;
+  }
+
+  return parseHtml(body);
+}
+
 function promptFileDownload(filename, blob) {
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
@@ -350,7 +361,11 @@ async function fetchToolbarSettings() {
 
 async function fetchUserProfileSettings() {
   console.info('Fetching user profile settings');
-  const html = await requestModuleHtml('managesite/ManageSiteProfilePagesModule');
+  const html = await requestModuleHtmlPro('managesite/ManageSiteProfilePagesModule');
+  if (!html) {
+    return null;
+  }
+
   const enable = html.getElementById('sm-profile-pages-form-enable').checked;
   const category = html.querySelector('input[name=category]').value;
   const currentTag = html.querySelector('input[name=tag_current]').value;
@@ -361,7 +376,11 @@ async function fetchUserProfileSettings() {
 
 async function fetchCustomFooter() {
   console.info('Fetching custom footer settings');
-  const html = await requestModuleHtml('managesite/ManageSiteCustomFooterModule');
+  const html = await requestModuleHtmlPro('managesite/ManageSiteCustomFooterModule');
+  if (!html) {
+    return { enable: false };
+  }
+
   const enable = html.getElementById('sm-use-custom-footer').checked;
   const wikitext = html.getElementById('sm-cutsom-footer-input').innerText;
   return { enable, wikitext };
@@ -412,7 +431,12 @@ async function fetchAccessPolicy() {
 
 async function fetchHttpsPolicy() {
   console.info('Fetching HTTPS settings');
-  const html = await requestModuleHtml('managesite/ManageSiteSecureAccessModule');
+  const html = await requestModuleHtmlPro('managesite/ManageSiteSecureAccessModule');
+  if (!html) {
+    // if no paid plan, then HTTP only
+    return { http: true, https: false };
+  }
+
   const element = html.getElementById('sm-ssl-mode-select');
   for (const option of element.children) {
     // options are:
@@ -458,7 +482,16 @@ async function fetchApiAccess() {
 
 async function fetchUserIconPolicy() {
   console.info('Fetching user icon policy');
-  const html = await requestModuleHtml('managesite/ManageSiteUserIconsModule');
+  const html = await requestModuleHtmlPro('managesite/ManageSiteUserIconsModule');
+  if (!html) {
+    // default is to show everything
+    return {
+      avatar: true,
+      karma: true,
+      pro: true,
+    };
+  }
+
   const element = html.querySelector('#sm-usericons-form input[checked]');
   switch (element.value) {
     // "Avatar, Karma, Pro icons"
