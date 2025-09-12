@@ -173,6 +173,10 @@ function parseForumPermissions(value) {
   // - t:;p:m;e:o;s:
   // - t:m;p:rm;e:arm;s:
 
+  if (value === null) {
+    return null;
+  }
+
   // Permission action:
   //   t - Create new threads
   //   p - Add posts to existing threads
@@ -203,7 +207,6 @@ function parseForumPermissions(value) {
   }
 
   // Parse each permission group
-
   for (const group of value.split(';')) {
     const [perm, scope] = group.split(':');
     const action = parseAction(perm);
