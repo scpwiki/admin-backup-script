@@ -24,11 +24,18 @@ function parseHtml(html) {
 }
 
 function parseUserElement(element) {
-  // 'span.printuser a' element -> user ID int
-  const regex = /WIKIDOT\.page\.listeners\.userInfo\((\d+)\)/;
-  const value = element.getAttribute('onclick');
-  const result = value.match(regex)[1];
-  return parseInt(result);
+  if (element.classList.contains('deleted')) {
+    // 'span.printuser' with "deleted" class -> data-id user ID int
+    const field = element.getAttribute('data-id');
+    return parseInt(field);
+  } else {
+    // 'span.printuser a' element -> user ID int
+    const anchor = element.querySelector('a');
+    const regex = /WIKIDOT\.page\.listeners\.userInfo\((\d+)\)/;
+    const value = anchor.getAttribute('onclick');
+    const result = value.match(regex)[1];
+    return parseInt(result);
+  }
 }
 
 function parseDateElement(element) {
@@ -724,7 +731,7 @@ async function fetchUserBans() {
   // skip the first row, is header
   for (let i = 1; i < ubans.length; i++) {
     const uban = ubans[i];
-    const userElement = uban.querySelector('td span.printuser a');
+    const userElement = uban.querySelector('td span.printuser');
     const dateElement = uban.querySelector('td span.odate');
     const reasonElement = uban.querySelector('td[style]');
     bans.push({
@@ -774,7 +781,7 @@ async function fetchSiteMembers() {
       // skip the first row, is header
       for (let i = 1; i < entries.length; i++) {
         const entry = entries[i];
-        const userElement = entry.querySelector('td span.printuser a');
+        const userElement = entry.querySelector('td span.printuser');
         const userId = parseUserElement(userElement);
         users.push(userId);
       }
