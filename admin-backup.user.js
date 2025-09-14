@@ -320,8 +320,24 @@ async function fetchBasicInfo() {
   const html = await requestModuleHtml('managesite/ManageSiteGeneralModule');
   const description = html.getElementById('site-description-field').value;
   const textFields = html.querySelectorAll('.controls input');
-  if (textFields.length !== 4) {
-    throw new Error(`Unexpected number of text fields for general site info: ${textFields.length} (wanted 4)`);
+  let name, tagline, homePage, welcomePage;
+  switch (textFields.length) {
+    case 5:
+      // first item is the site slug, skip it
+      name = textFields[1].value;
+      tagline = textFields[2].value;
+      homePage = textFields[3].value;
+      welcomePage = textFields[4].value;
+      break;
+    case 4:
+      // normal distribution
+      name = textFields[0].value;
+      tagline = textFields[1].value;
+      homePage = textFields[2].value;
+      welcomePage = textFields[3].value;
+      break;
+    default:
+    throw new Error(`Unexpected number of text fields for general site info: ${textFields.length} (wanted 4 or 5)`);
   }
 
   return {
@@ -330,10 +346,10 @@ async function fetchBasicInfo() {
     slug,
     lang,
     description,
-    name: textFields[0].value,
-    tagline: textFields[1].value,
-    homePage: textFields[2].value,
-    welcomePage: textFields[3].value,
+    name,
+    tagline,
+    homePage,
+    welcomePage,
   };
 }
 
