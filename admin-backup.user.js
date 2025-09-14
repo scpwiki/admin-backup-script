@@ -950,8 +950,12 @@ async function runBackupInner() {
     ['layouts.json', layouts],
     ['bans.json', { user: userBans, ip: ipBans }],
     ['members.json', members],
-    ['forum.json', forum],
   ];
+
+  // Add forum is enabled
+  if (forum !== null) {
+    zipFiles.push(['forum.json', forum]);
+  }
 
   // Add favicons
   for (const icon of icons) {
