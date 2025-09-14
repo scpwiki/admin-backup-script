@@ -122,6 +122,10 @@ function parsePagePermissions(enable, value) {
   // - v:arm;e:;c:;m:;d:;a:;r:;z:;o:
   // - v:armo;c:;e:arm;m:rm;d:rm;a:m;r:o;z:o;o:
 
+  if (value === null) {
+    return null;
+  }
+
   // Permission action:
   //   v - View pages
   //   c - Create pages
