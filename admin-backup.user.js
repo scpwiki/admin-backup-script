@@ -970,7 +970,6 @@ async function runBackupInner() {
     }
   }
 
-  console.info('Building output ZIP');
   const zipBlob = await createZip(zipFiles);
   promptFileDownload(`${siteInfo.slug}.zip`, zipBlob);
   URL.revokeObjectURL(zipBlob);
