@@ -417,11 +417,14 @@ async function fetchAccessPolicy() {
   const autoAccept = html.getElementById('sm-membership-automatic').value;
   const enablePassword = html.getElementById('sm-membership-password').checked;
   const passwordValue = html.querySelector('input[name=password]').value;
-  const blockClones = html.getElementById('sm-block-clone-checkbox').checked;
-  const blockIncludes = html.getElementById('sm-block-csi-checkbox').checked;
-  // ^ cross-site includes
   const allowHotlinks = html.getElementById('sm-allow-hotlinking-checkbox').checked;
   // NOTE: private site options are not being saved
+
+  const blockClonesElement = html.getElementById('sm-block-clone-checkbox');
+  const blockClones = blockClonesElement ? blockClonesElement.checked : false;
+  const blockIncludesElement = html.getElementById('sm-block-csi-checkbox');
+  const blockIncludes = blockIncludesElement ? blockClonesElement.checked : false;
+  // ^ cross-site includes
 
   let accessMode;
   switch (accessModeElement.id) {
