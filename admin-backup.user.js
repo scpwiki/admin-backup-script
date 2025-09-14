@@ -724,6 +724,12 @@ async function fetchThemesAndLayouts() {
 
   const editButtons = html.querySelectorAll('table td a.btn-success');
   for (const editButton of editButtons) {
+    if (editButton.classList.contains('disabled')) {
+      // ignore default layouts
+      console.warn('Ignoring default item', editButton);
+      continue;
+    }
+
     const callback = editButton.getAttribute('onclick');
     const match = callback.match(regex);
     if (match === null) {
