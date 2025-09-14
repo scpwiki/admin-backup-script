@@ -863,6 +863,12 @@ async function fetchSiteMembers() {
 
 async function fetchForumSettings() {
   const html = await requestModuleHtml('managesite/ManageSiteForumSettingsModule');
+
+  const noForumElement = html.querySelector('div.lead');
+  if (noForumElement !== null) {
+    return null;
+  }
+
   const nestingLevelSelectElemment = html.getElementById('max-nest-level');
   const nestingLevelElement = nestingLevelSelectElemment.querySelector('option[selected]');
   const nestingLevel = parseInt(nestingLevelElement.value);
