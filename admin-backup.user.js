@@ -953,7 +953,9 @@ async function runBackup(backupButton, backupProgress) {
   }
 }
 
-function main() {
+function setup(headerElement) {
+  console.info('Setting up admin panel backup system');
+
   const backupProgress = document.createElement('progress');
   backupProgress.classList.add('hidden');
   backupProgress.style = 'margin-left: 1em';
@@ -963,13 +965,25 @@ function main() {
   backupButton.classList.add('btn');
   backupButton.addEventListener('click', () => runBackup(backupButton, backupProgress));
 
-  const headerElement = document.querySelector('.page-header');
-  if (!headerElement) {
-    throw new Error('Invalid DOM or page load error');
-  }
-
   headerElement.appendChild(backupButton);
   headerElement.appendChild(backupProgress);
+}
+
+function main() {
+  console.debug('Creating observer for admin panel page');
+  const element = document.getElementById('sm-action-area');
+  if (element === null) {
+    throw new Error('Cannot find sm-action-area in document');
+  }
+
+  const observer = new MutationObserver(async () => {
+    const headerElement = element.querySelector('.page-header');
+    if (headerElement !== null) {
+      // it has loaded in, run setup
+      setup(headerElement);
+    }
+  });
+  observer.observe(element, { childList: true });
 }
 
 main();
