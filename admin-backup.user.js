@@ -749,6 +749,13 @@ async function fetchThemesAndLayouts() {
 async function fetchUserBans() {
   console.info('Fetching user ban data');
   const html = await requestModuleHtml('managesite/blocks/ManageSiteUserBlocksModule');
+
+  // if this element is present then there are no bans
+  const noBansElement = html.querySelector('div.alert');
+  if (noBansElement !== null) {
+    return [];
+  }
+
   const ubans = html.querySelectorAll('table tr');
   const bans = [];
   // skip the first row, is header
@@ -770,7 +777,7 @@ async function fetchIpBans() {
   console.info('Fetching IP ban data');
   const html = await requestModuleHtml('managesite/blocks/ManageSiteIpBlocksModule');
 
-  // if this element is present then there are no bans
+  // like above, this means no bans
   const noBansElement = html.querySelector('div.alert');
   if (noBansElement !== null) {
     return [];
