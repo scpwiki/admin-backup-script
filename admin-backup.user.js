@@ -109,7 +109,8 @@ function parseRating(value) {
   } else if (value.includes('P')) {
     voteType = 'plusonly';
   } else {
-    throw new Error(`Invalid vote type in spec str: ${value}`);
+    console.warn(`Using 'plusonly' as default rating (no capital letter in '${value}')`);
+    voteType = 'plusonly';
   }
 
   return { enable, eligibility, visibility, voteType };
