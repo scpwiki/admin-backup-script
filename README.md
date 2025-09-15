@@ -2,7 +2,9 @@
 
 **Currently in testing**
 
-This userscript is intended for Wikidot site administrators to back up data related to a site's settings, ban data, and membership. Backing up takes a few minutes for small sites (those under a few hundred members), and takes longer the more site members, categories, layouts, and Wikidot themes the site has. The output is a ZIP file filled with primarily JSON files.
+This userscript is intended for Wikidot site administrators to back up data related to a site's settings, ban data, and membership.
+
+Backing up takes around a minute for small sites (those under a few hundred members), and requires more time depending on how many site members, categories, layouts, and Wikidot themes the site has. The output is a ZIP file filled with primarily JSON files.
 
 ![screenshot](screenshot-button.png)
 
