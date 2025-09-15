@@ -826,7 +826,19 @@ async function fetchSiteMembers() {
         const entry = entries[i];
         const userElement = entry.querySelector('td span.printuser');
         const userId = parseUserElement(userElement);
-        users.push(userId);
+
+        const dateElement = entry.querySelector('td span.odate');
+        if (dateElement === null) {
+          // this must be the moderators or admins list
+          // just emit a list of user IDs
+          users.push(userId);
+        } else {
+          // this must be the regular list of members
+          // which includes join dates. we want this
+          // information so we add it to the object
+          const joined = parseDateElement(dateElement);
+          users.push({ userId, joined });
+        }
       }
 
       // If there's a pager, there are multiple pages, iterate through each one.
