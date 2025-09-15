@@ -928,7 +928,7 @@ async function fetchForumSettings() {
         groupId: group_id,
         name,
         description,
-        max_nest_level,
+        maxNestLevel: max_nest_level,
         stats: {
           posts,
           threads: number_threads,
