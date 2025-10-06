@@ -760,8 +760,10 @@ async function fetchUserBans() {
   const html = await requestModuleHtml('managesite/blocks/ManageSiteUserBlocksModule');
 
   // if this element is present then there are no bans
+  // however! it could be present but with 'display: none'
   const noBansElement = html.querySelector('div.alert');
-  if (noBansElement !== null) {
+  if (noBansElement !== null && noBansElement.style.display !== 'none') {
+    console.warn("Found alert element in user bans, shouldn't be any bans here", noBansElement);
     return [];
   }
 
@@ -788,7 +790,8 @@ async function fetchIpBans() {
 
   // like above, this means no bans
   const noBansElement = html.querySelector('div.alert');
-  if (noBansElement !== null) {
+  if (noBansElement !== null && noBansElement.style.display !== 'none') {
+    console.warn("Found alert element in user bans, shouldn't be any bans here", noBansElement);
     return [];
   }
 
