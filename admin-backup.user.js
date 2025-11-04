@@ -947,7 +947,7 @@ async function fetchForumSettings() {
 
 // Main
 
-async function runBackupInner() {
+async function runBackupInner(withSiteMembers) {
   // Fetch data
   const siteInfo = await fetchBasicInfo();
   siteInfo.domains = await fetchDomainSettings();
@@ -963,7 +963,6 @@ async function runBackupInner() {
   const categories = await fetchCategorySettings();
   const { themes, layouts } = await fetchThemesAndLayouts();
   const [userBans, ipBans] = await Promise.all([fetchUserBans(), fetchIpBans()]);
-  const members = await fetchSiteMembers();
   const forum = await fetchForumSettings();
 
   // Build and download ZIP
@@ -973,8 +972,16 @@ async function runBackupInner() {
     ['themes.json', themes],
     ['layouts.json', layouts],
     ['bans.json', { user: userBans, ip: ipBans }],
-    ['members.json', members],
   ];
+
+  // If site members are enabled
+  //
+  // In full backups this is always collected, but we give an option
+  // of excluding it in the UI since for large sites it's quite slow.
+  if (withSiteMembers) {
+    const members = await fetchSiteMembers();
+    zipFiles.push(['members.json', members]);
+  }
 
   // Add forum is enabled
   if (forum !== null) {
@@ -1011,7 +1018,7 @@ async function runBackup(backupButton, backupProgress, withMembers = true) {
   backupProgress.classList.remove('hidden');
 
   try {
-    await runBackupInner();
+    await runBackupInner(withMembers);
   } finally {
     backupButton.innerText = 'Run Admin Panel Backup';
     backupButton.removeAttribute('disabled');
