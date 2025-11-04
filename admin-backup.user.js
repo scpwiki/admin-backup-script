@@ -999,8 +999,11 @@ async function runBackupInner() {
   }
 }
 
-async function runBackup(backupButton, backupProgress) {
-  await showConfirmation('run backup', 'Are you sure you want to start an admin panel backup?');
+async function runBackup(backupButton, backupProgress, withMembers = true) {
+  const message = withMembers
+    ? 'Are you sure you want to start a <strong>full</strong> admin panel backup?'
+    : 'Are you sure you want to start an admin panel backup <strong>without site members</strong>?<br>This option is faster but leaves site membership data uncollected.';
+  await showConfirmation('run backup', message);
 
   console.info('Starting backup!');
   backupButton.innerText = 'Backup Running';
@@ -1024,11 +1027,18 @@ function setup(headerElement) {
   backupProgress.style = 'margin-left: 1em';
 
   const backupButton = document.createElement('button');
-  backupButton.innerText = 'Run Admin Panel Backup';
+  backupButton.innerText = 'Backup admin panel';
   backupButton.classList.add('btn');
-  backupButton.addEventListener('click', () => runBackup(backupButton, backupProgress));
+  backupButton.style = 'margin-right: 0.1em';
+  backupButton.addEventListener('click', () => runBackup(backupButton, backupProgress, true));
+
+  const backupButton2 = document.createElement('button');
+  backupButton2.innerText = 'Backup without site members';
+  backupButton2.classList.add('btn');
+  backupButton2.addEventListener('click', () => runBackup(backupButton, backupProgress, false));
 
   headerElement.appendChild(backupButton);
+  headerElement.appendChild(backupButton2);
   headerElement.appendChild(backupProgress);
 }
 
