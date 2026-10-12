@@ -364,7 +364,6 @@ async function fetchDomainSettings() {
   console.info('Fetching domain settings');
   const html = await requestModuleHtml('managesite/ManageSiteDomainModule');
   const customDomain = html.getElementById('sm-domain-field').value || null;
-  const customDomainOnly = html.getElementById('sm-domain-default').checked;
   const redirectElements = html.querySelectorAll('#sm-redirects-box input');
   const extraDomains = [];
   for (const redirectElement of redirectElements) {
@@ -375,7 +374,6 @@ async function fetchDomainSettings() {
 
   return {
     customDomain,
-    customDomainOnly,
     extraDomains,
   };
 }
