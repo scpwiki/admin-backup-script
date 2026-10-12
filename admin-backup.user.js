@@ -422,7 +422,6 @@ async function fetchAccessPolicy() {
   const autoAccept = html.getElementById('sm-membership-automatic').value;
   const enablePassword = html.getElementById('sm-membership-password').checked;
   const passwordValue = html.querySelector('input[name=password]').value;
-  const allowHotlinks = html.getElementById('sm-allow-hotlinking-checkbox').checked;
   // NOTE: private site options are not being saved
 
   const blockClonesElement = html.getElementById('sm-block-clone-checkbox');
@@ -456,7 +455,6 @@ async function fetchAccessPolicy() {
     },
     blockClones,
     blockIncludes,
-    allowHotlinks,
   };
 }
 
